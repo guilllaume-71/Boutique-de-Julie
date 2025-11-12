@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pois De Senteurs By Julie </title>
+    <link rel="icon" type="image/jpeg" href="Pois de Senteurs By Julie.jpg">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&display=swap" rel="stylesheet">
+</head>
+
+<!-- MODALE CONNEXION/INSCRIPTION -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal-content">
+        <button class="close-modal" id="closeModal">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <h2 class="modal-title">🌸 Bienvenue 🌸</h2>
+        
+        <!-- Onglets -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="login">Connexion</button>
+            <button class="tab-btn" data-tab="signup">Inscription</button>
+        </div>
+        
+        <!-- CONNEXION -->
+        <div class="tab-content active" id="login">
+            <div class="social-buttons">
+                <button class="social-btn google-btn">
+                    <i class="fab fa-google"></i> Continuer avec Google
+                </button>
+                <button class="social-btn apple-btn">
+                    <i class="fab fa-apple"></i> Continuer avec Apple
+                </button>
+            </div>
+            
+            <div class="divider">
+                <span>OU</span>
+            </div>
+            
+            <form class="auth-form">
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Mot de passe" required>
+                <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+                <button type="submit" class="submit-btn">Se connecter</button>
+            </form>
+        </div>
+        
+        <!-- INSCRIPTION -->
+        <div class="tab-content" id="signup">
+            <div class="social-buttons">
+                <button class="social-btn google-btn">
+                    <i class="fab fa-google"></i> S'inscrire avec Google
+                </button>
+                <button class="social-btn apple-btn">
+                    <i class="fab fa-apple"></i> S'inscrire avec Apple
+                </button>
+            </div>
+            
+            <div class="divider">
+                <span>OU</span>
+            </div>
+            
+            <form class="auth-form">
+                <input type="text" placeholder="Nom complet" required>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Mot de passe" required>
+                <input type="password" placeholder="Confirmer le mot de passe" required>
+                <button type="submit" class="submit-btn">S'inscrire</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<body>
+    <!-- Bandeau Header -->
+    <header>
+        <div class="logo">
+            <i class="fas fa-spa"></i>
+            <span>Pois De Senteurs By Julie</span>
+        </div>
+        <nav>
+            <a href="#accueil" class="nav-link active" data-page="home">Accueil</a>
+        </nav>
+    </header>
+
+    <!-- Page d'accueil -->
+    <main class="home-page active-page" id="homePage">
+        <div class="hero-section">
+            <h2 class="hero-text">
+                Un univers délicat où la beauté des fleurs éternelles<br>
+                rencontre la douceur des senteurs artisanales
+            </h2>
+            <button class="cta-button" id="enterBtn">
+                Entre Dans L'univers
+            </button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
