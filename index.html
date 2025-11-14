@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Pois de Senteurs</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- BANDEAU SUPÉRIEUR -->
+    <header class="admin-header">
+        <div class="container">
+            <h1> Administration - Pois de Senteurs</h1>
+            <div class="header-actions">
+                <button onclick="window.location.href='../index.html'" class="btn-retour">
+                    ← Retour au site
+                </button>
+                <button onclick="deconnexion()" class="btn-deconnexion">
+                    Déconnexion
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONNEXION ADMIN -->
+    <div id="login-section" class="login-container">
+        <div class="login-box">
+            <h2>🔐 Connexion Administrateur</h2>
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label>Identifiant</label>
+                    <input type="text" id="admin-username" placeholder="admin" required>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="admin-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ZONE ADMIN -->
+    <div id="admin-zone" class="admin-zone" style="display: none;">
+        <div class="container">
+            
+            <!-- STATISTIQUES -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📦 Produits</h3>
+                    <p class="stat-number" id="total-products">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>💰 Chiffre d'affaires</h3>
+                    <p class="stat-number">0€</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📊 Commandes</h3>
+                    <p class="stat-number">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>👥 Clients</h3>
+                    <p class="stat-number">0</p>
+                </div>
+            </div>
+
+            <!-- ONGLETS -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('products')">
+                    🛍️ Gestion des Produits
+                </button>
+                <button class="tab-btn" onclick="showTab('add')">
+                    ➕ Ajouter un Produit
+                </button>
+            </div>
+
+            <!-- ONGLET LISTE DES PRODUITS -->
+            <div id="tab-products" class="tab-content active">
+                <div class="section-header">
+                    <h2>Liste des Produits</h2>
+                    <input type="text" id="search-product" placeholder="🔍 Rechercher un produit..." onkeyup="searchProducts()">
+                </div>
+                
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Nom</th>
+                                <th>Catégorie</th>
+                                <th>Prix</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ONGLET AJOUTER PRODUIT -->
+            <div id="tab-add" class="tab-content">
+                <div class="section-header">
+                    <h2 id="form-title">➕ Ajouter un Nouveau Produit</h2>
+                </div>
+
+                <form id="product-form" class="product-form" onsubmit="saveProduct(event)">
+                    <input type="hidden" id="edit-id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom du produit *</label>
+                            <input type="text" id="product-name" placeholder="Ex: Bougie Lavande" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Catégorie *</label>
+                            <select id="product-category" required>
+                                <option value="">Choisir...</option>
+                                <option value="fondant parfumé">Fondant</option>
+                                <option value="bijoux en fleurs séchées">Bijoux en fleurs séchées</option>
+                                <option value="peigne en fleurs séchées">Peigne en fleurs séchées</option>
+                                <option value="brûle parfum">Brûle parfum</option>
+                                <option value="couronne en fleurs séchées">Couronne en fleurs séchées</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prix (€) *</label>
+                            <input type="number" id="product-price" placeholder="19.99" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Stock *</label>
+                            <input type="number" id="product-stock" placeholder="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="product-description" rows="4" placeholder="Décrivez le produit..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>URL de l'image</label>
+                        <input type="url" id="product-image" placeholder="https://exemple.com/image.jpg">
+                        <small>Ou glissez une image ci-dessous</small>
+                    </div>
+
+                    <div class="image-upload" id="image-upload">
+                        <p>📸 Glissez votre image ici ou cliquez pour sélectionner</p>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    </div>
+
+                    <div id="image-preview" style="display: none;">
+                        <img id="preview-img" src="" alt="Aperçu">
+                        <button type="button" onclick="removeImage()" class="btn-remove-img">✖ Supprimer</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save">💾 Enregistrer</button>
+                        <button type="button" onclick="cancelEdit()" class="btn-cancel">✖ Annuler</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMATION SUPPRESSION -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Confirmer la suppression</h3>
+            <p>Voulez-vous vraiment supprimer ce produit ?</p>
+            <div class="modal-actions">
+                <button onclick="confirmDelete()" class="btn-confirm">Oui, supprimer</button>
+                <button onclick="closeDeleteModal()" class="btn-cancel">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
