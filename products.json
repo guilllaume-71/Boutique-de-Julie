@@ -1,0 +1,91 @@
+{
+  "fondants": [
+    {
+      "id": 1,
+      "name": "Cerise noire explosive",
+      "icon": "🍒",
+      "price": 2.50,
+      "category": "fondants",
+      "stock": 50,
+      "image": "images/fondants/cerise.jpg"
+    },
+    {
+      "id": 2,
+      "name": "Citrouille vanillée",
+      "icon": "🎃",
+      "price": 2.50,
+      "category": "fondants",
+      "stock": 45,
+      "image": "images/fondants/citrouille.jpg"
+    },
+    {
+      "id": 3,
+      "name": "Linge propre",
+      "icon": "🧺",
+      "price": 2.50,
+      "category": "fondants",
+      "stock": 60,
+      "image": "images/fondants/linge.jpg"
+    },
+    {
+      "id": 4,
+      "name": "Fleurs d'oranger",
+      "icon": "🌸",
+      "price": 2.50,
+      "category": "fondants",
+      "stock": 55,
+      "image": "images/fondants/fleurs.jpg"
+    },
+    {
+      "id": 5,
+      "name": "Lait d'amande",
+      "icon": "🥛",
+      "price": 2.50,
+      "category": "fondants",
+      "stock": 40,
+      "image": "images/fondants/lait.jpg"
+    }
+  ],
+  
+  "brules": [
+    {
+      "id": 101,
+      "name": "Brûle-parfum Blanc",
+      "icon": "🕯️",
+      "price": 12.00,
+      "category": "brules",
+      "stock": 15,
+      "image": "images/brules/blanc.jpg"
+    },
+    {
+      "id": 102,
+      "name": "Brûle-parfum Noir",
+      "icon": "🖤",
+      "price": 12.00,
+      "category": "brules",
+      "stock": 12,
+      "image": "images/brules/noir.jpg"
+    }
+  ],
+
+  "coffrets": [
+    {
+      "id": 201,
+      "name": "Coffret 5 fondants",
+      "icon": "🎁",
+      "price": 10.00,
+      "category": "coffrets",
+      "stock": 20,
+      "image": "images/coffrets/petit.jpg"
+    },
+    {
+      "id": 202,
+      "name": "Coffret 10 fondants",
+      "icon": "🎁",
+      "price": 18.00,
+      "category": "coffrets",
+      "stock": 15,
+      "image": "images/coffrets/moyen.jpg"
+    }
+  ]
+}

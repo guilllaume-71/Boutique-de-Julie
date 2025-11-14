@@ -3,222 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pois De Senteurs By Julie</title>
-    <link rel="icon" href="Pois de Senteurs By Julie.jpg" type="image/jpeg">
-    <link href="https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <title>Administration - Pois de Senteurs</title>
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- BANDEAU -->
-    <header>
-        <h1 class="site-title">Pois De Senteurs By Julie</h1>
-        <nav>
-            <button class="nav-btn" onclick="showPage('accueil')">Accueil</button>
-            <button class="nav-btn" onclick="showPage('connexion')">Connexion</button>
-        </nav>
+    <!-- BANDEAU SUPÉRIEUR -->
+    <header class="admin-header">
+        <div class="container">
+            <h1> Administration - Pois de Senteurs</h1>
+            <div class="header-actions">
+                <button onclick="window.location.href='../index.html'" class="btn-retour">
+                    ← Retour au site
+                </button>
+                <button onclick="deconnexion()" class="btn-deconnexion">
+                    Déconnexion
+                </button>
+            </div>
+        </div>
     </header>
 
-    <!-- BOUTON MENU CATÉGORIES (VISIBLE DANS LES PAGES PRODUITS) -->
-    <button id="menuToggle" class="menu-toggle" onclick="toggleMenu()">
-        <span class="menu-icon">☰</span> Catégories
-    </button>
-
-    <!-- VOLET COULISSANT CATÉGORIES -->
-    <div id="sideMenu" class="side-menu">
-        <div class="menu-header">
-            <h3>Catégories</h3>
-            <button class="close-btn" onclick="toggleMenu()">✕</button>
-        </div>
-        
-        <div class="menu-items">
-            <div class="menu-item" onclick="showCategoryPage('fondants')">
-                <span class="item-icon">🕯️</span>
-                <span class="item-name">Fondants parfumés</span>
-            </div>
-            <div class="menu-item" onclick="showCategoryPage('brules')">
-                <span class="item-icon">🔥</span>
-                <span class="item-name">Brûles parfum</span>
-            </div>
-            <div class="menu-item" onclick="showCategoryPage('coffrets')">
-                <span class="item-icon">🎁</span>
-                <span class="item-name">Coffret fondants parfumés</span>
-            </div>
-            <div class="menu-item" onclick="showCategoryPage('peignes')">
-                <span class="item-icon">🌼</span>
-                <span class="item-name">Peigne à chignon en fleurs séchées</span>
-            </div>
-            <div class="menu-item" onclick="showCategoryPage('bijoux')">
-                <span class="item-icon">💍</span>
-                <span class="item-name">Bijoux en fleurs séchées</span>
-            </div>
-            <div class="menu-item" onclick="showCategoryPage('couronnes')">
-                <span class="item-icon">🌸</span>
-                <span class="item-name">Couronnes en fleurs séchées</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- OVERLAY (FOND SOMBRE QUAND MENU OUVERT) -->
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
-
-    <!-- PAGE ACCUEIL -->
-    <div id="accueil" class="page active">
-        <div class="content-center">
-            <img src="Pois de Senteurs By Julie.jpg" alt="Logo" class="logo-main">
-            <p class="slogan">Un univers délicat où la beauté des fleurs éternelles rencontre la douceur des senteurs artisanales</p>
-            <button class="btn-enter" onclick="showPage('boutique')">Entre dans L'univers</button>
-        </div>
-    </div>
-
-    <!-- PAGE BOUTIQUE -->
-    <div id="boutique" class="page">
-        <h2>Nos Catégories</h2>
-        <div class="categories">
-            <div class="category" onclick="showCategoryPage('fondants')">
-                <span class="cat-icon">🕯️</span>
-                <span class="cat-name">Fondants parfumés</span>
-            </div>
-            <div class="category" onclick="showCategoryPage('brules')">
-                <span class="cat-icon">🔥</span>
-                <span class="cat-name">Brûles parfum</span>
-            </div>
-            <div class="category" onclick="showCategoryPage('coffrets')">
-                <span class="cat-icon">🎁</span>
-                <span class="cat-name">Coffret fondants parfumés</span>
-            </div>
-            <div class="category" onclick="showCategoryPage('peignes')">
-                <span class="cat-icon">🌼</span>
-                <span class="cat-name">Peigne à chignon en fleurs séchées</span>
-            </div>
-            <div class="category" onclick="showCategoryPage('bijoux')">
-                <span class="cat-icon">💍</span>
-                <span class="cat-name">Bijoux en fleurs séchées</span>
-            </div>
-            <div class="category" onclick="showCategoryPage('couronnes')">
-                <span class="cat-icon">🌸</span>
-                <span class="cat-name">Couronnes en fleurs séchées</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- PAGE FONDANTS -->
-    <div id="fondants" class="page">
-        <h2>Fondants Parfumés</h2>
-        
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="🔍 Rechercher un parfum..." oninput="filterProducts()">
-        </div>
-
-        <div class="products-grid" id="productsGrid"></div>
-    </div>
-
-    <!-- PAGE BRÛLES PARFUM -->
-    <div id="brules" class="page">
-        <h2>Brûles Parfum</h2>
-        <p style="text-align: center; color: #A38C7D; font-size: 24px; margin-top: 50px;">Produits à venir...</p>
-    </div>
-
-    <!-- PAGE COFFRETS -->
-    <div id="coffrets" class="page">
-        <h2>Coffrets Fondants Parfumés</h2>
-        <p style="text-align: center; color: #A38C7D; font-size: 24px; margin-top: 50px;">Produits à venir...</p>
-    </div>
-
-    <!-- PAGE COURONNES -->
-    <div id="couronnes" class="page">
-        <h2>Couronnes de Fleurs Séchées</h2>
-
-        <div class="custom-products">
-            <div class="custom-card">
-                <div class="custom-image">🌸</div>
-                <h3>Couronne Ø 20 cm</h3>
-                <p class="price">25,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Décrivez vos préférences (couleurs, style, fleurs...)"></textarea>
+    <!-- CONNEXION ADMIN -->
+    <div id="login-section" class="login-container">
+        <div class="login-box">
+            <h2>🔐 Connexion Administrateur</h2>
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label>Identifiant</label>
+                    <input type="text" id="admin-username" placeholder="admin" required>
                 </div>
-                <button class="btn-add-cart" onclick="addToCart('Couronne 20cm')">Commander</button>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="admin-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ZONE ADMIN -->
+    <div id="admin-zone" class="admin-zone" style="display: none;">
+        <div class="container">
+            
+            <!-- STATISTIQUES -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📦 Produits</h3>
+                    <p class="stat-number" id="total-products">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>💰 Chiffre d'affaires</h3>
+                    <p class="stat-number">0€</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📊 Commandes</h3>
+                    <p class="stat-number">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>👥 Clients</h3>
+                    <p class="stat-number">0</p>
+                </div>
             </div>
 
-            <div class="custom-card">
-                <div class="custom-image">🌺</div>
-                <h3>Couronne Ø 30 cm</h3>
-                <p class="price">30,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Décrivez vos préférences (couleurs, style, fleurs...)"></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Couronne 30cm')">Commander</button>
+            <!-- ONGLETS -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('products')">
+                    🛍️ Gestion des Produits
+                </button>
+                <button class="tab-btn" onclick="showTab('add')">
+                    ➕ Ajouter un Produit
+                </button>
             </div>
 
-            <div class="custom-card">
-                <div class="custom-image">💐</div>
-                <h3>Couronne Ø 40 cm</h3>
-                <p class="price">35,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Décrivez vos préférences (couleurs, style, fleurs...)"></textarea>
+            <!-- ONGLET LISTE DES PRODUITS -->
+            <div id="tab-products" class="tab-content active">
+                <div class="section-header">
+                    <h2>Liste des Produits</h2>
+                    <input type="text" id="search-product" placeholder="🔍 Rechercher un produit..." onkeyup="searchProducts()">
                 </div>
-                <button class="btn-add-cart" onclick="addToCart('Couronne 40cm')">Commander</button>
+                
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Image</th>
+                                <th>Nom</th>
+                                <th>Catégorie</th>
+                                <th>Prix</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ONGLET AJOUTER PRODUIT -->
+            <div id="tab-add" class="tab-content">
+                <div class="section-header">
+                    <h2 id="form-title">➕ Ajouter un Nouveau Produit</h2>
+                </div>
+
+                <form id="product-form" class="product-form" onsubmit="saveProduct(event)">
+                    <input type="hidden" id="edit-id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom du produit *</label>
+                            <input type="text" id="product-name" placeholder="Ex: Bougie Lavande" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Catégorie *</label>
+                            <select id="product-category" required>
+                                <option value="">Choisir...</option>
+                                <option value="fondant parfumé">Fondant</option>
+                                <option value="bijoux en fleurs séchées">Bijoux en fleurs séchées</option>
+                                <option value="peigne en fleurs séchées">Peigne en fleurs séchées</option>
+                                <option value="brûle parfum">Brûle parfum</option>
+                                <option value="couronne en fleurs séchées">Couronne en fleurs séchées</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prix (€) *</label>
+                            <input type="number" id="product-price" placeholder="19.99" step="0.01" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Stock *</label>
+                            <input type="number" id="product-stock" placeholder="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="product-description" rows="4" placeholder="Décrivez le produit..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>URL de l'image</label>
+                        <input type="url" id="product-image" placeholder="https://exemple.com/image.jpg">
+                        <small>Ou glissez une image ci-dessous</small>
+                    </div>
+
+                    <div class="image-upload" id="image-upload">
+                        <p>📸 Glissez votre image ici ou cliquez pour sélectionner</p>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                    </div>
+
+                    <div id="image-preview" style="display: none;">
+                        <img id="preview-img" src="" alt="Aperçu">
+                        <button type="button" onclick="removeImage()" class="btn-remove-img">✖ Supprimer</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save">💾 Enregistrer</button>
+                        <button type="button" onclick="cancelEdit()" class="btn-cancel">✖ Annuler</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- PAGE BIJOUX -->
-    <div id="bijoux" class="page">
-        <h2>Bijoux en Fleurs Séchées</h2>
-
-        <div class="custom-products">
-            <div class="custom-card">
-                <div class="custom-image">💍</div>
-                <h3>Bracelet de Fleurs Séchées</h3>
-                <p class="price">15,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Couleurs, style, taille du poignet..."></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Bracelet')">Commander</button>
-            </div>
-
-            <div class="custom-card">
-                <div class="custom-image">👂</div>
-                <h3>Boucles d'Oreilles</h3>
-                <p class="price">23,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Couleurs, style, type de fixation..."></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Boucles d\'oreilles')">Commander</button>
+    <!-- MODAL CONFIRMATION SUPPRESSION -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Confirmer la suppression</h3>
+            <p>Voulez-vous vraiment supprimer ce produit ?</p>
+            <div class="modal-actions">
+                <button onclick="confirmDelete()" class="btn-confirm">Oui, supprimer</button>
+                <button onclick="closeDeleteModal()" class="btn-cancel">Annuler</button>
             </div>
         </div>
     </div>
 
-    <!-- PAGE PEIGNES -->
-    <div id="peignes" class="page">
-        <h2>Peignes à Chignon en Fleurs Séchées</h2>
-
-        <div class="custom-products">
-            <div class="custom-card">
-                <div class="custom-image">🌼</div>
-                <h3>Peigne à Chignon Ø 10 cm</h3>
-                <p class="price">Prix sur demande</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Couleurs, style, événement (mariage, soirée...)"></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Peigne à chignon')">Demander un devis</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- PAGE CONNEXION -->
-    <div id="connexion" class="page">
-        <div class="content-center">
-            <h2>Connexion</h2>
-            <p style="color: #A38C7D; font-size: 24px;">Espace de connexion à venir...</p>
-        </div>
-    </div>
-
-    <script src="script.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>
