@@ -1,43 +1,26 @@
-// FONDANTS PARFUMÉS (LES 28)
-const fondants = [
-    { name: "Cerise noire explosive", icon: "🍒", price: "3,50 €" },
-    { name: "Citrouille vanillée", icon: "🎃", price: "3,50 €" },
-    { name: "Linge propre", icon: "🧺", price: "3,50 €" },
-    { name: "Fleurs d'oranger", icon: "🌸", price: "3,50 €" },
-    { name: "Lait d'amande", icon: "🥛", price: "3,50 €" },
-    { name: "Délice interdit", icon: "🍫", price: "3,50 €" },
-    { name: "Brioche au beurre", icon: "🥐", price: "3,50 €" },
-    { name: "Licorne", icon: "🦄", price: "3,50 €" },
-    { name: "Délice gourmand", icon: "🍰", price: "3,50 €" },
-    { name: "Cuberdon", icon: "🍬", price: "3,50 €" },
-    { name: "L'heure des sorcières", icon: "🧙", price: "3,50 €" },
-    { name: "Barbe à papa", icon: "🍭", price: "3,50 €" },
-    { name: "Sorbet à la fraise", icon: "🍓", price: "3,50 €" },
-    { name: "Cappuccino crémeux", icon: "☕", price: "3,50 €" },
-    { name: "Miel & lait", icon: "🍯", price: "3,50 €" },
-    { name: "Réglisse", icon: "🖤", price: "3,50 €" },
-    { name: "Thé vert matcha", icon: "🍵", price: "3,50 €" },
-    { name: "Violette", icon: "💜", price: "3,50 €" },
-    { name: "Cookies noisette", icon: "🍪", price: "3,50 €" },
-    { name: "Framboise", icon: "🫐", price: "3,50 €" },
-    { name: "Coco & monoï", icon: "🥥", price: "3,50 €" },
-    { name: "Ananas & coco", icon: "🍍", price: "3,50 €" },
-    { name: "Eucalyptus frais", icon: "🌿", price: "3,50 €" },
-    { name: "Muguet des bois", icon: "🔔", price: "3,50 €" },
-    { name: "Pêche & abricot", icon: "🍑", price: "3,50 €" },
-    { name: "Caramel au beurre salé", icon: "🍮", price: "3,50 €" },
-    { name: "Rose & pivoine", icon: "🌹", price: "3,50 €" },
-    { name: "Lavande de Provence", icon: "🪻", price: "3,50 €" }
-];
+// ===== VARIABLES GLOBALES =====
+let allProducts = {};
+let cart = [];
 
-// GESTION DU MENU COULISSANT
+// ===== CHARGER LES PRODUITS DEPUIS LE JSON =====
+async function loadAllProducts() {
+    try {
+        const response = await fetch('data/products.json');
+        allProducts = await response.json();
+        console.log('✅ Produits chargés:', allProducts);
+    } catch (error) {
+        console.error('❌ Erreur chargement produits:', error);
+    }
+}
+
+// ===== GESTION DU MENU =====
 function toggleMenu() {
     const menu = document.getElementById('sideMenu');
     const overlay = document.getElementById('overlay');
-    
+
     menu.classList.toggle('open');
     overlay.classList.toggle('active');
-    
+
     if (menu.classList.contains('open')) {
         document.body.style.overflow = 'hidden';
     } else {
@@ -45,36 +28,33 @@ function toggleMenu() {
     }
 }
 
-// NAVIGATION VERS UNE CATÉGORIE (FERME LE MENU)
+// ===== NAVIGATION =====
 function showCategoryPage(pageId) {
-    toggleMenu(); // Ferme le menu
-    showPage(pageId); // Affiche la page
+    toggleMenu();
+    showPage(pageId);
 }
 
-// NAVIGATION GÉNÉRALE
 function showPage(pageId) {
     const pages = document.querySelectorAll('.page');
     pages.forEach(page => page.classList.remove('active'));
-    
+
     const targetPage = document.getElementById(pageId);
     if (targetPage) {
         targetPage.classList.add('active');
-        
-        // Charger les produits si page fondants
-        if (pageId === 'fondants') {
-            loadProducts();
-        }
-        
-        // Afficher/Masquer le bouton catégories
+
+        // Charger les produits selon la catégorie
+        if (pageId === 'fondants') displayProducts('fondants');
+        if (pageId === 'brules') displayProducts('brules');
+        if (pageId === 'coffrets') displayProducts('coffrets');
+
         updateMenuButton(pageId);
     }
 }
 
-// AFFICHAGE DU BOUTON CATÉGORIES
 function updateMenuButton(pageId) {
     const menuToggle = document.getElementById('menuToggle');
     const categoryPages = ['fondants', 'brules', 'coffrets', 'peignes', 'bijoux', 'couronnes'];
-    
+
     if (categoryPages.includes(pageId)) {
         menuToggle.classList.add('visible');
     } else {
@@ -82,46 +62,87 @@ function updateMenuButton(pageId) {
     }
 }
 
-// CHARGER LES PRODUITS FONDANTS
-function loadProducts() {
+// ===== AFFICHER LES PRODUITS =====
+function displayProducts(category) {
     const grid = document.getElementById('productsGrid');
     if (!grid) return;
-    
+
     grid.innerHTML = '';
-    
-    fondants.forEach(fondant => {
+
+    const products = allProducts[category] || [];
+
+    products.forEach(product => {
         const card = document.createElement('div');
         card.className = 'product-card';
         card.innerHTML = `
-            <div class="product-icon">${fondant.icon}</div>
-            <div class="product-name">${fondant.name}</div>
-            <div class="product-price">${fondant.price}</div>
-            <button class="btn-add-cart" onclick="addToCart('${fondant.name}')">Ajouter au panier</button>
+            <div class="product-icon">${product.icon}</div>
+            <div class="product-name">${product.name}</div>
+            <div class="product-price">${product.price.toFixed(2)} €</div>
+            <div class="product-stock">Stock: ${product.stock}</div>
+            <button class="btn-add-cart" onclick="addToCart(${product.id}, '${category}')">
+                Ajouter au panier
+            </button>
         `;
         grid.appendChild(card);
     });
 }
 
-// RECHERCHE
+// ===== RECHERCHE =====
 function filterProducts() {
     const input = document.getElementById('searchInput');
     if (!input) return;
-    
+
     const searchTerm = input.value.toLowerCase();
     const cards = document.querySelectorAll('.product-card');
-    
+
     cards.forEach(card => {
         const name = card.querySelector('.product-name').textContent.toLowerCase();
         card.style.display = name.includes(searchTerm) ? 'flex' : 'none';
     });
 }
 
-// AJOUTER AU PANIER
-function addToCart(productName) {
-    alert(`✅ ${productName} ajouté au panier !`);
+// ===== PANIER =====
+function addToCart(productId, category) {
+    const product = allProducts[category].find(p => p.id === productId);
+    
+    if (!product) {
+        alert('❌ Produit introuvable');
+        return;
+    }
+
+    if (product.stock <= 0) {
+        alert('❌ Produit en rupture de stock');
+        return;
+    }
+
+    // Vérifier si déjà dans le panier
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity++;
+    } else {
+        cart.push({
+            id: productId,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            category: category
+        });
+    }
+
+    updateCartDisplay();
+    alert(`✅ ${product.name} ajouté au panier !`);
 }
 
-// INITIALISATION
-document.addEventListener('DOMContentLoaded', function() {
+function updateCartDisplay() {
+    const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+    console.log('🛒 Panier:', cart);
+    console.log('📊 Total articles:', cartCount);
+    // TODO: Mettre à jour l'icône panier
+}
+
+// ===== INITIALISATION =====
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadAllProducts();
     showPage('accueil');
 });
