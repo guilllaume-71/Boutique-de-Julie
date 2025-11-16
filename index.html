@@ -10,13 +10,18 @@
 </head>
 <body>
     <!-- BANDEAU -->
-    <header>
+<header>
+    <div class="header-left">
+        <img src="Pois de Senteurs By Julie.jpg" alt="Logo" class="logo-header" style="height: 40px; width: 40px;">
         <h1 class="site-title">Pois De Senteurs By Julie</h1>
-        <nav>
-            <button class="nav-btn" onclick="showPage('accueil')">Accueil</button>
-            <button class="nav-btn" onclick="showPage('connexion')">Connexion</button>
-        </nav>
-    </header>
+    </div>
+    <nav>
+        <button class="nav-btn" onclick="showPage('accueil')">Accueil</button>
+        <button class="nav-btn" id="connexionBtn" onclick="showPage('connexion')">Connexion</button>
+        <button class="nav-btn" id="profilBtn" onclick="showPage('profil')" style="display: none;">👤 Profil</button>
+        <button class="nav-btn" id="panierBtn" onclick="showPage('panier')" style="display: none;">🛒 Panier (<span id="cartCount">0</span>)</button>
+    </nav>
+</header>
 
     <!-- BOUTON MENU CATÉGORIES (VISIBLE DANS LES PAGES PRODUITS) -->
     <button id="menuToggle" class="menu-toggle" onclick="toggleMenu()">
@@ -29,13 +34,17 @@
             <h3>Catégories</h3>
             <button class="close-btn" onclick="toggleMenu()">✕</button>
         </div>
-        
+
         <div class="menu-items">
+            <div class="menu-item" onclick="showCategoryPage('all')">
+                <span class="item-icon">🛍️</span>
+                <span class="item-name">Tous les produits</span>
+            </div>
             <div class="menu-item" onclick="showCategoryPage('fondants')">
                 <span class="item-icon">🕯️</span>
                 <span class="item-name">Fondants parfumés</span>
             </div>
-            <div class="menu-item" onclick="showCategoryPage('brules')">
+            <div class="menu-item" onclick="showCategoryPage('bruleparfums')">
                 <span class="item-icon">🔥</span>
                 <span class="item-name">Brûles parfum</span>
             </div>
@@ -73,12 +82,19 @@
     <!-- PAGE BOUTIQUE -->
     <div id="boutique" class="page">
         <h2>Nos Catégories</h2>
+
+        <!-- BOUTON VOIR TOUS LES PRODUITS -->
+        <div class="category all-products" onclick="showCategoryPage('all')">
+            <span class="cat-icon">🛍️</span>
+            <span class="cat-name">Tous les produits</span>
+        </div>
+
         <div class="categories">
             <div class="category" onclick="showCategoryPage('fondants')">
                 <span class="cat-icon">🕯️</span>
                 <span class="cat-name">Fondants parfumés</span>
             </div>
-            <div class="category" onclick="showCategoryPage('brules')">
+            <div class="category" onclick="showCategoryPage('bruleparfums')">
                 <span class="cat-icon">🔥</span>
                 <span class="cat-name">Brûles parfum</span>
             </div>
@@ -101,121 +117,237 @@
         </div>
     </div>
 
+    <!-- PAGE TOUS LES PRODUITS -->
+    <div id="all-products" class="page">
+        <h2>🛍️ Tous Nos Produits</h2>
+        <div class="search-bar">
+            <input type="text" id="searchAllProducts" placeholder="🔍 Rechercher un produit..." oninput="filterAllProducts()">
+        </div>
+        <div id="all-products-grid" class="products-grid"></div>
+    </div>
+
     <!-- PAGE FONDANTS -->
     <div id="fondants" class="page">
         <h2>Fondants Parfumés</h2>
-        
+
         <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="🔍 Rechercher un parfum..." oninput="filterProducts()">
+            <input type="text" id="searchInput" placeholder="🔍 Rechercher un parfum..." oninput="filterProducts('fondants')">
         </div>
 
-        <div class="products-grid" id="productsGrid"></div>
+        <div class="products-grid" id="fondants-grid"></div>
     </div>
 
     <!-- PAGE BRÛLES PARFUM -->
-    <div id="brules" class="page">
+    <div id="bruleparfums" class="page">
         <h2>Brûles Parfum</h2>
-        <p style="text-align: center; color: #A38C7D; font-size: 24px; margin-top: 50px;">Produits à venir...</p>
+        <div class="search-bar">
+            <input type="text" id="searchBruleparfums" placeholder="🔍 Rechercher..." oninput="filterProducts('bruleparfums')">
+        </div>
+        <div class="products-grid" id="bruleparfums-grid"></div>
     </div>
 
     <!-- PAGE COFFRETS -->
     <div id="coffrets" class="page">
         <h2>Coffrets Fondants Parfumés</h2>
-        <p style="text-align: center; color: #A38C7D; font-size: 24px; margin-top: 50px;">Produits à venir...</p>
+        <div class="search-bar">
+            <input type="text" id="searchCoffrets" placeholder="🔍 Rechercher..." oninput="filterProducts('coffrets')">
+        </div>
+        <div class="products-grid" id="coffrets-grid"></div>
     </div>
 
     <!-- PAGE COURONNES -->
     <div id="couronnes" class="page">
         <h2>Couronnes de Fleurs Séchées</h2>
-
-        <div class="custom-products">
-            <div class="custom-card">
-                <div class="custom-image">🌸</div>
-                <h3>Couronne Ø 20 cm</h3>
-                <p class="price">25,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Décrivez vos préférences (couleurs, style, fleurs...)"></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Couronne 20cm')">Commander</button>
-            </div>
-
-            <div class="custom-card">
-                <div class="custom-image">🌺</div>
-                <h3>Couronne Ø 30 cm</h3>
-                <p class="price">30,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Décrivez vos préférences (couleurs, style, fleurs...)"></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Couronne 30cm')">Commander</button>
-            </div>
-
-            <div class="custom-card">
-                <div class="custom-image">💐</div>
-                <h3>Couronne Ø 40 cm</h3>
-                <p class="price">35,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Décrivez vos préférences (couleurs, style, fleurs...)"></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Couronne 40cm')">Commander</button>
-            </div>
+        <div class="search-bar">
+            <input type="text" id="searchCouronnes" placeholder="🔍 Rechercher..." oninput="filterProducts('couronnes')">
         </div>
+        <div class="products-grid" id="couronnes-grid"></div>
     </div>
 
     <!-- PAGE BIJOUX -->
     <div id="bijoux" class="page">
         <h2>Bijoux en Fleurs Séchées</h2>
-
-        <div class="custom-products">
-            <div class="custom-card">
-                <div class="custom-image">💍</div>
-                <h3>Bracelet de Fleurs Séchées</h3>
-                <p class="price">15,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Couleurs, style, taille du poignet..."></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Bracelet')">Commander</button>
-            </div>
-
-            <div class="custom-card">
-                <div class="custom-image">👂</div>
-                <h3>Boucles d'Oreilles</h3>
-                <p class="price">23,00 €</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Couleurs, style, type de fixation..."></textarea>
-                </div>
-                <button class="btn-add-cart" onclick="addToCart('Boucles d\'oreilles')">Commander</button>
-            </div>
+        <div class="search-bar">
+            <input type="text" id="searchBijoux" placeholder="🔍 Rechercher..." oninput="filterProducts('bijoux')">
         </div>
+        <div class="products-grid" id="bijoux-grid"></div>
     </div>
 
     <!-- PAGE PEIGNES -->
     <div id="peignes" class="page">
         <h2>Peignes à Chignon en Fleurs Séchées</h2>
+        <div class="search-bar">
+            <input type="text" id="searchPeignes" placeholder="🔍 Rechercher..." oninput="filterProducts('peignes')">
+        </div>
+        <div class="products-grid" id="peignes-grid"></div>
+    </div>
 
-        <div class="custom-products">
-            <div class="custom-card">
-                <div class="custom-image">🌼</div>
-                <h3>Peigne à Chignon Ø 10 cm</h3>
-                <p class="price">Prix sur demande</p>
-                <div class="custom-options">
-                    <label>Personnalisation :</label>
-                    <textarea placeholder="Couleurs, style, événement (mariage, soirée...)"></textarea>
+    <!-- PAGE CONNEXION/INSCRIPTION -->
+    <div id="connexion" class="page">
+        <div class="content-center">
+            <div class="auth-container">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="showAuthTab('login')">Connexion</button>
+                    <button class="auth-tab" onclick="showAuthTab('register')">Inscription</button>
                 </div>
-                <button class="btn-add-cart" onclick="addToCart('Peigne à chignon')">Demander un devis</button>
+
+                <!-- FORMULAIRE CONNEXION -->
+                <div id="login-form" class="auth-form active">
+                    <h2>Se connecter</h2>
+                    <form onsubmit="login(event)">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="loginEmail" placeholder="votre@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Mot de passe</label>
+                            <input type="password" id="loginPassword" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Se connecter</button>
+                    </form>
+                </div>
+
+                <!-- FORMULAIRE INSCRIPTION -->
+                <div id="register-form" class="auth-form">
+                    <h2>Créer un compte</h2>
+                    <form onsubmit="createAccount(event)">
+                        <div class="form-group">
+                            <label>Nom complet</label>
+                            <input type="text" id="regNom" placeholder="Prénom Nom" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="regEmail" placeholder="votre@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input type="tel" id="regTelephone" placeholder="06 12 34 56 78" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Adresse</label>
+                            <input type="text" id="regAdresse" placeholder="Numéro et rue" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Code postal</label>
+                                <input type="text" id="regCodePostal" placeholder="75000" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ville</label>
+                                <input type="text" id="regVille" placeholder="Paris" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Mot de passe</label>
+                            <input type="password" id="regPassword" placeholder="••••••••" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmer le mot de passe</label>
+                            <input type="password" id="regConfirmPassword" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Créer mon compte</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- PAGE CONNEXION -->
-    <div id="connexion" class="page">
-        <div class="content-center">
-            <h2>Connexion</h2>
-            <p style="color: #A38C7D; font-size: 24px;">Espace de connexion à venir...</p>
+    <!-- PAGE PANIER -->
+    <div id="panier" class="page">
+        <!-- BOUTON RETOUR BOUTIQUE -->
+        <div class="cart-header">
+            <button class="btn-back-shop" onclick="showPage('boutique')">← Retour à la boutique</button>
+            <h2>Mon Panier</h2>
+        </div>
+        
+        <div class="cart-container">
+            <div id="cartContainer"></div>
+            <div id="cartSummary" class="cart-summary"></div>
+        </div>
+    </div>
+
+    <!-- PAGE PROFIL -->
+    <div id="profil" class="page">
+        <div class="profile-container">
+            <div class="profile-sidebar">
+                <button class="profile-tab active" onclick="showProfileSection('infos')">📋 Mes Informations</button>
+                <button class="profile-tab" onclick="showProfileSection('orders')">📦 Mes Commandes</button>
+                <button class="profile-tab" onclick="showProfileSection('security')">🔒 Sécurité</button>
+                <button class="profile-tab danger" onclick="showProfileSection('delete')">🗑️ Supprimer le compte</button>
+            </div>
+
+            <div>
+                <!-- SECTION INFORMATIONS -->
+                <div id="profileInfos" class="profile-section active">
+                    <h3>Mes Informations</h3>
+                    <form class="profile-form" onsubmit="updateProfile(event)">
+                        <div class="form-group">
+                            <label>Nom</label>
+                            <input type="text" id="profileNom" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="profileEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input type="tel" id="profileTelephone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Adresse</label>
+                            <input type="text" id="profileAdresse" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Code postal</label>
+                                <input type="text" id="profileCodePostal" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Ville</label>
+                                <input type="text" id="profileVille" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">Mettre à jour</button>
+                    </form>
+                </div>
+
+                <!-- SECTION COMMANDES -->
+                <div id="profileOrders" class="profile-section">
+                    <h3>Mes Commandes</h3>
+                    <div id="ordersContainer" class="orders-list"></div>
+                </div>
+
+                <!-- SECTION SÉCURITÉ -->
+                <div id="profileSecurity" class="profile-section">
+                    <h3>Changer mon mot de passe</h3>
+                    <form id="passwordForm" class="profile-form" onsubmit="changePassword(event)">
+                        <div class="form-group">
+                            <label>Ancien mot de passe</label>
+                            <input type="password" id="oldPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Nouveau mot de passe</label>
+                            <input type="password" id="newPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmer le nouveau mot de passe</label>
+                            <input type="password" id="confirmNewPassword" required>
+                        </div>
+                        <button type="submit" class="btn-submit">Changer le mot de passe</button>
+                    </form>
+                </div>
+
+                <!-- SECTION SUPPRESSION -->
+                <div id="profileDelete" class="profile-section">
+                    <h3>Supprimer mon compte</h3>
+                    <p style="color: #D32F2F; font-size: 24px; margin-bottom: 20px;">
+                        ⚠️ Cette action est irréversible ! Toutes vos données seront supprimées.
+                    </p>
+                    <button onclick="deleteAccount()" class="btn-submit" style="background: #D32F2F;">
+                        Supprimer définitivement mon compte
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
