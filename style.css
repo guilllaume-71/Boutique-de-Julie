@@ -715,3 +715,137 @@ h2 {
         text-align: center;
     }
 }
+/* ===== PAGE PAIEMENT ===== */
+.payment-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+.payment-summary {
+    background: white;
+    border: 3px solid #A38C7D;
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.payment-summary h2 {
+    color: #A38C7D;
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+#payment-items {
+    margin: 20px 0;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid #ddd;
+    font-size: 22px;
+}
+
+.payment-total {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 3px solid #A38C7D;
+    text-align: right;
+}
+
+.payment-total h3 {
+    color: #A38C7D;
+    font-size: 28px;
+}
+
+.payment-methods {
+    background: white;
+    border: 3px solid #A38C7D;
+    border-radius: 15px;
+    padding: 30px;
+}
+
+.payment-methods h2 {
+    color: #A38C7D;
+    font-size: 32px;
+    margin-bottom: 20px;
+}
+
+.payment-method {
+    border: 2px solid #A38C7D;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.payment-method:hover {
+    background: rgba(163, 140, 125, 0.1);
+    transform: scale(1.02);
+}
+
+.payment-method input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.payment-method label {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    flex: 1;
+    font-size: 24px;
+}
+
+.payment-icon {
+    font-size: 32px;
+}
+
+.payment-form-details {
+    margin: 15px 0 15px 35px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+}
+
+.btn-pay {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 24px;
+    font-family: 'Amatic SC', cursive;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 100%;
+}
+
+.btn-pay:hover {
+    background: #45a049;
+    transform: scale(1.02);
+}
+
+.btn-back {
+    background: #A38C7D;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 22px;
+    font-family: 'Amatic SC', cursive;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-back:hover {
+    background: #8B7355;
+}
