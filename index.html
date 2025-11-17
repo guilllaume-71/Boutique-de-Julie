@@ -266,6 +266,59 @@
         </div>
     </div>
 
+    <!-- PAGE PAIEMENT -->
+    <div id="paiement" class="page">
+        <div class="payment-container">
+            <!-- RÉCAPITULATIF COMMANDE -->
+            <div class="payment-summary">
+                <h2>📋 Récapitulatif de la commande</h2>
+                <div id="payment-items"></div>
+                <div class="payment-total">
+                    <h3>Total à payer : <span id="payment-total-amount">0.00 €</span></h3>
+                </div>
+            </div>
+
+            <!-- CHOIX DU PAIEMENT -->
+            <div class="payment-methods">
+                <h2>💳 Choisissez votre mode de paiement</h2>
+                
+                <!-- Carte Bancaire SumUp -->
+                <div class="payment-method" onclick="selectPaymentMethod('sumup')">
+                    <input type="radio" name="payment" id="payment-sumup">
+                    <label for="payment-sumup">
+                        <span class="payment-icon">💳</span>
+                        <span class="payment-name">Carte Bancaire (SumUp)</span>
+                    </label>
+                </div>
+                <div id="sumup-form" class="payment-form-details" style="display: none;">
+                    <p style="color: #A38C7D; font-size: 20px; margin: 15px 0;">
+                        Vous allez être redirigé vers la page de paiement SumUp sécurisée.
+                    </p>
+                    <button onclick="processSumUpPayment()" class="btn-pay">Payer avec SumUp</button>
+                </div>
+
+                <!-- PayPal -->
+                <div class="payment-method" onclick="selectPaymentMethod('paypal')">
+                    <input type="radio" name="payment" id="payment-paypal">
+                    <label for="payment-paypal">
+                        <span class="payment-icon">💰</span>
+                        <span class="payment-name">PayPal</span>
+                    </label>
+                </div>
+                <div id="paypal-form" class="payment-form-details" style="display: none;">
+                    <p style="color: #A38C7D; font-size: 20px; margin: 15px 0;">
+                        Vous allez être redirigé vers PayPal pour finaliser le paiement.
+                    </p>
+                    <button onclick="processPayPalPayment()" class="btn-pay">Payer avec PayPal</button>
+                </div>
+            </div>
+
+            <button onclick="showPage('panier')" class="btn-back" style="margin-top: 30px;">
+                ← Retour au panier
+            </button>
+        </div>
+    </div>
+
     <!-- PAGE PROFIL -->
     <div id="profil" class="page">
         <div class="profile-container">
