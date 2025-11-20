@@ -18,8 +18,10 @@
     <nav>
         <button class="nav-btn" onclick="showPage('accueil')">Accueil</button>
         <button class="nav-btn" id="connexionBtn" onclick="showPage('connexion')">Connexion</button>
+        <button class="nav-btn" onclick="showPage('contact')">📧 Contact</button>
         <button class="nav-btn" id="profilBtn" onclick="showPage('profil')" style="display: none;">👤 Profil</button>
         <button class="nav-btn" id="panierBtn" onclick="showPage('panier')" style="display: none;">🛒 Panier (<span id="cartCount">0</span>)</button>
+        <button class="nav-btn" id="deconnexionBtn" onclick="logout()" style="display: none; background: #C17B6B;">🚪 Déconnexion</button>
     </nav>
 </header>
 
@@ -404,6 +406,39 @@
         </div>
     </div>
 
+
+    <!-- PAGE CONTACT -->
+    <div id="contact" class="page">
+        <div class="contact-container">
+            <h2>📧 Contactez-nous</h2>
+            <p class="contact-intro">Une question ? Une demande personnalisée ? N'hésitez pas à nous écrire !</p>
+            
+            <form class="contact-form" onsubmit="sendContactMessage(event)">
+                <div class="form-group">
+                    <label>Votre Nom</label>
+                    <input type="text" id="contactNom" placeholder="Ex: Marie Dupont" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Votre Email</label>
+                    <input type="email" id="contactEmail" placeholder="Ex: marie@exemple.com" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Sujet</label>
+                    <input type="text" id="contactSubject" placeholder="Ex: Question sur un produit" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Votre Message</label>
+                    <textarea id="contactMessage" rows="6" placeholder="Écrivez votre message ici..." required></textarea>
+                </div>
+                
+                <button type="submit" class="btn-submit">📨 Envoyer le message</button>
+            </form>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
 </body>
 </html>
