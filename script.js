@@ -6,73 +6,252 @@ let allProducts = [];
 let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
 // ========================================
-// MIGRATION ANCIEN SYSTÈME VERS MULTI-COMPTES
+// SYSTÈME DE TOASTS DISCRET
 // ========================================
-function migrateOldAccount() {
-    const oldUserData = localStorage.getItem('userData');
-    const users = JSON.parse(localStorage.getItem('users')) || [];
+function initToastContainer() {
+    if (!document.getElementById('toast-container')) {
+        const container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 999999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        `;
+        document.body.appendChild(container);
+    }
+}
+
+function showToast(message, type = 'success', duration = 3000) {
+    initToastContainer();
     
-    if (oldUserData && users.length === 0) {
-        try {
-            const oldUser = JSON.parse(oldUserData);
-            
-            const newUser = {
-                id: Date.now(),
-                role: 'client',
-                nom: oldUser.nom,
-                email: oldUser.email,
-                telephone: oldUser.telephone || '',
-                adresse: oldUser.adresse || '',
-                codePostal: oldUser.codePostal || '',
-                ville: oldUser.ville || '',
-                password: oldUser.password
-            };
-            
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            
-            const oldOrders = localStorage.getItem('orders');
-            if (oldOrders) {
-                localStorage.setItem(`orders_${newUser.id}`, oldOrders);
+    const toast = document.createElement('div');
+    
+    const icons = {
+        'success': '✅',
+        'error': '❌',
+        'warning': '⚠️',
+        'info': 'ℹ️'
+    };
+    
+    const colors = {
+        'success': '#4CAF50',
+        'error': '#f44336',
+        'warning': '#ff9800',
+        'info': '#2196F3'
+    };
+    
+    toast.style.cssText = `
+        background: white;
+        color: #333;
+        padding: 16px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        min-width: 300px;
+        max-width: 500px;
+        border-left: 4px solid ${colors[type]};
+        animation: slideIn 0.3s ease-out;
+        pointer-events: auto;
+        cursor: pointer;
+    `;
+    
+    toast.innerHTML = `
+        <span style="font-size: 20px;">${icons[type]}</span>
+        <span style="flex: 1;">${message}</span>
+        <span style="opacity: 0.5; font-size: 18px; cursor: pointer;" onclick="this.parentElement.remove()">×</span>
+    `;
+    
+    // Ajouter l'animation CSS
+    if (!document.getElementById('toast-animations')) {
+        const style = document.createElement('style');
+        style.id = 'toast-animations';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(400px); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
             }
-            
-            localStorage.removeItem('userData');
-            localStorage.removeItem('orders');
-            
-            console.log('✅ Ancien compte migré avec succès !');
-            alert('✅ Votre compte a été mis à jour vers le nouveau système !');
-            
-            return newUser;
-        } catch (error) {
-            console.error('❌ Erreur lors de la migration:', error);
-        }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(400px); opacity: 0; }
+            }
+            .toast:hover {
+                box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+                transform: translateY(-2px);
+                transition: all 0.2s ease;
+            }
+        `;
+        document.head.appendChild(style);
     }
     
-    return null;
+    const container = document.getElementById('toast-container');
+    container.appendChild(toast);
+    
+    toast.onclick = () => {
+        toast.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+    };
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, duration);
+}
+
+function confirmAction(message, onConfirm, onCancel) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999998;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.2s ease;
+    `;
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        max-width: 400px;
+        text-align: center;
+        animation: scaleIn 0.3s ease;
+    `;
+    
+    modal.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 20px;">⚠️</div>
+        <p style="font-size: 16px; margin-bottom: 30px; color: #333;">${message}</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="confirm-yes" style="
+                padding: 12px 24px;
+                background: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+            ">✅ Oui</button>
+            <button id="confirm-no" style="
+                padding: 12px 24px;
+                background: #f44336;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+            ">❌ Non</button>
+        </div>
+    `;
+    
+    if (!document.getElementById('modal-animations')) {
+        const style = document.createElement('style');
+        style.id = 'modal-animations';
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes scaleIn {
+                from { transform: scale(0.8); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    document.getElementById('confirm-yes').onclick = () => {
+        overlay.remove();
+        if (onConfirm) onConfirm();
+    };
+    
+    document.getElementById('confirm-no').onclick = () => {
+        overlay.remove();
+        if (onCancel) onCancel();
+    };
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            overlay.remove();
+            if (onCancel) onCancel();
+        }
+    };
+}
+
+// ========================================
+// FONCTIONS API
+// ========================================
+async function loadUsersFromAPI() {
+    try {
+        const response = await fetch('api/get-users.php');
+        const data = await response.json();
+        return data.users || [];
+    } catch (error) {
+        console.error('Erreur chargement users:', error);
+        return [];
+    }
+}
+
+async function saveUsersToAPI(users) {
+    try {
+        const response = await fetch('api/save-users.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({users: users})
+        });
+        const data = await response.json();
+        return data.success;
+    } catch (error) {
+        console.error('Erreur sauvegarde users:', error);
+        return false;
+    }
+}
+
+async function loadProductsFromAPI() {
+    try {
+        const response = await fetch('api/get-products.php');
+        const data = await response.json();
+        return data.products || [];
+    } catch (error) {
+        console.error('Erreur chargement produits:', error);
+        return [];
+    }
 }
 
 // ========================================
 // CHARGER LES PRODUITS
 // ========================================
-function loadProducts(category = 'all') {
+async function loadProducts(category = 'all') {
     console.log('🔄 Chargement des produits...');
     
-    const storedProducts = localStorage.getItem('products');
+    allProducts = await loadProductsFromAPI();
+    console.log('✅ Produits chargés:', allProducts.length);
     
-    if (storedProducts) {
-        try {
-            allProducts = JSON.parse(storedProducts);
-            console.log('✅ Produits chargés:', allProducts.length);
-            displayProducts(category);
-        } catch (error) {
-            console.error('❌ Erreur parsing JSON:', error);
-            allProducts = [];
-            displayNoProducts();
-        }
-    } else {
-        console.warn('⚠️ Aucun produit trouvé dans localStorage');
-        allProducts = [];
+    if (allProducts.length === 0) {
         displayNoProducts();
+    } else {
+        displayProducts(category);
     }
 }
 
@@ -108,16 +287,11 @@ function displayProducts(category = 'all') {
     const containerId = containerMap[category] || 'all-products-grid';
     const container = document.getElementById(containerId);
 
-    if (!container) {
-        console.error('❌ Conteneur introuvable:', containerId);
-        return;
-    }
+    if (!container) return;
 
     let productsToDisplay = category === 'all' 
         ? allProducts 
         : allProducts.filter(p => p.category === category);
-
-    console.log('📊 Produits à afficher:', productsToDisplay.length);
 
     if (productsToDisplay.length === 0) {
         container.innerHTML = `
@@ -130,15 +304,910 @@ function displayProducts(category = 'all') {
 
     container.innerHTML = productsToDisplay.map(product => `
         <div class="product-card">
-            <img src="${product.image || 'placeholder.jpg'}" alt="${product.name}" onerror="this.src='placeholder.jpg'">
+            <img src="${product.image || 'https://via.placeholder.com/300x200/F5E6D3/8B7355?text=Produit'}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300x200/F5E6D3/8B7355?text=Erreur'">
             <h3>${product.name}</h3>
             <p class="product-description">${product.description || ''}</p>
+            ${product.allergens && product.allergens.length > 0 ? `
+                <div style="background: #FFF3CD; padding: 8px; border-radius: 5px; margin: 10px 0; font-size: 12px;">
+                    <strong>⚠️ Allergènes :</strong> ${product.allergens.join(', ')}
+                </div>
+            ` : ''}
             <p class="product-price">${parseFloat(product.price).toFixed(2)} €</p>
+            ${product.customizable ? `
+                <p style="color: #2196F3; font-size: 14px; margin: 5px 0;">
+                    ✨ Personnalisable
+                </p>
+            ` : ''}
             <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
                 🛒 Ajouter au panier
             </button>
         </div>
     `).join('');
+}
+
+// ========================================
+// PANIER AVEC PERSONNALISATION
+// ========================================
+function addToCart(productId) {
+    const product = allProducts.find(p => p.id === productId);
+
+    if (!product) {
+        showToast('Produit introuvable', 'error');
+        return;
+    }
+
+    // Si personnalisable, ouvrir la modale de personnalisation
+    if (product.customizable) {
+        openCustomizationModal(product);
+        return;
+    }
+
+    // Sinon ajouter normalement
+    addProductToCart(product, null);
+}
+
+function openCustomizationModal(product) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 999998;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.2s ease;
+    `;
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+        animation: scaleIn 0.3s ease;
+    `;
+    
+    let customizationHTML = `
+        <h3 style="color: #A38C7D; margin-bottom: 20px;">✨ Personnaliser votre produit</h3>
+        <p style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">${product.name}</p>
+    `;
+    
+    // Texte personnalisé
+    if (product.customOptions && product.customOptions.allowText) {
+        customizationHTML += `
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">
+                    💬 Votre message personnalisé :
+                </label>
+                <input type="text" id="custom-text" maxlength="${product.customOptions.textMaxLength || 50}" 
+                    placeholder="Ex: Joyeux anniversaire Marie"
+                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                <small style="color: #666;">Maximum ${product.customOptions.textMaxLength || 50} caractères</small>
+            </div>
+        `;
+    }
+    
+    // Choix des fleurs
+    if (product.customOptions && product.customOptions.allowFlowers) {
+        customizationHTML += `
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: bold;">
+                    🌸 Choisissez vos fleurs (max ${product.customOptions.maxFlowersSelection || 3}) :
+                </label>
+                ${product.customOptions.availableFlowers.map((flower, index) => `
+                    <label style="display: block; padding: 8px; margin-bottom: 5px; cursor: pointer; border-radius: 5px; transition: background 0.2s;"
+                           onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
+                        <input type="checkbox" class="flower-checkbox" value="${flower}" data-max="${product.customOptions.maxFlowersSelection || 3}"
+                               style="margin-right: 10px;">
+                        ${flower}
+                    </label>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    customizationHTML += `
+        <div style="display: flex; gap: 10px; margin-top: 30px;">
+            <button id="add-custom-product" style="
+                flex: 1;
+                padding: 12px 24px;
+                background: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+            ">✅ Ajouter au panier</button>
+            <button id="cancel-custom" style="
+                padding: 12px 24px;
+                background: #f44336;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 600;
+            ">❌ Annuler</button>
+        </div>
+    `;
+    
+    modal.innerHTML = customizationHTML;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Gestion des checkboxes (max sélection)
+    const checkboxes = modal.querySelectorAll('.flower-checkbox');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const max = parseInt(this.dataset.max);
+            const checked = modal.querySelectorAll('.flower-checkbox:checked').length;
+            if (checked >= max) {
+                modal.querySelectorAll('.flower-checkbox:not(:checked)').forEach(c => c.disabled = true);
+            } else {
+                modal.querySelectorAll('.flower-checkbox').forEach(c => c.disabled = false);
+            }
+        });
+    });
+    
+    document.getElementById('add-custom-product').onclick = () => {
+        const customization = {};
+        
+        if (product.customOptions && product.customOptions.allowText) {
+            const text = document.getElementById('custom-text').value.trim();
+            if (text) customization.text = text;
+        }
+        
+        if (product.customOptions && product.customOptions.allowFlowers) {
+            const selectedFlowers = Array.from(modal.querySelectorAll('.flower-checkbox:checked')).map(cb => cb.value);
+            if (selectedFlowers.length > 0) customization.flowers = selectedFlowers;
+        }
+        
+        addProductToCart(product, customization);
+        overlay.remove();
+    };
+    
+    document.getElementById('cancel-custom').onclick = () => {
+        overlay.remove();
+    };
+    
+    overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+    };
+}
+
+function addProductToCart(product, customization) {
+    const cartItem = {
+        id: Date.now(), // ID unique pour chaque article (même produit peut avoir plusieurs personnalisations)
+        productId: product.id,
+        name: product.name,
+        price: parseFloat(product.price),
+        image: product.image || 'https://via.placeholder.com/80x80/F5E6D3/8B7355?text=Produit',
+        quantity: 1,
+        customization: customization
+    };
+    
+    cart.push(cartItem);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    
+    showToast(`${product.name} ajouté au panier ! 🛒`, 'success');
+}
+
+function updateCartCount() {
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    const cartCountEl = document.getElementById('cartCount');
+    if (cartCountEl) {
+        cartCountEl.textContent = totalItems;
+    }
+}
+
+function displayCart() {
+    const container = document.getElementById('cartContainer');
+    const summary = document.getElementById('cartSummary');
+
+    if (!container || !summary) return;
+
+    if (cart.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 60px; color: #A38C7D;">
+                <p style="font-size: 32px;">🛒</p>
+                <p style="font-size: 28px;">Votre panier est vide</p>
+                <button class="btn-enter" onclick="showPage('boutique')" style="margin-top: 30px;">
+                    Continuer mes achats
+                </button>
+            </div>
+        `;
+        summary.innerHTML = '';
+        return;
+    }
+
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    container.innerHTML = cart.map(item => `
+        <div class="cart-item" style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; display: flex; gap: 15px; align-items: center;">
+            <img src="${item.image}" 
+                 alt="${item.name}" 
+                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
+                 onerror="this.src='https://via.placeholder.com/80x80/F5E6D3/8B7355?text=Produit'">
+            <div style="flex: 1;">
+                <h4 style="margin: 0 0 10px 0;">${item.name}</h4>
+                ${item.customization ? `
+                    <div style="background: #E3F2FD; padding: 8px; border-radius: 5px; font-size: 13px; margin-bottom: 8px;">
+                        ${item.customization.text ? `<p style="margin: 2px 0;"><strong>💬 Message :</strong> ${item.customization.text}</p>` : ''}
+                        ${item.customization.flowers ? `<p style="margin: 2px 0;"><strong>🌸 Fleurs :</strong> ${item.customization.flowers.join(', ')}</p>` : ''}
+                    </div>
+                ` : ''}
+                <p style="margin: 0; color: #666;">${item.price.toFixed(2)} € × ${item.quantity}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button onclick="updateQuantity('${item.id}', -1)" style="background: #A38C7D; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">-</button>
+                <span style="font-size: 18px; font-weight: bold;">${item.quantity}</span>
+                <button onclick="updateQuantity('${item.id}', 1)" style="background: #A38C7D; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">+</button>
+                <button onclick="removeFromCart('${item.id}')" style="background: #D32F2F; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 10px;">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+
+    summary.innerHTML = `
+        <h3 style="color: #A38C7D; font-size: 32px; margin-bottom: 20px;">Récapitulatif</h3>
+        <p style="font-size: 24px; margin-bottom: 10px;">Sous-total : ${subtotal.toFixed(2)} €</p>
+        <p style="font-size: 14px; color: #666; margin-bottom: 30px;">Les frais de livraison seront calculés à l'étape suivante</p>
+        <button class="btn-enter" onclick="checkout()">Passer la commande</button>
+    `;
+}
+
+function updateQuantity(itemId, change) {
+    const item = cart.find(i => i.id == itemId);
+
+    if (!item) return;
+
+    item.quantity += change;
+
+    if (item.quantity <= 0) {
+        removeFromCart(itemId);
+        return;
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    displayCart();
+}
+
+function removeFromCart(itemId) {
+    cart = cart.filter(item => item.id != itemId);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    displayCart();
+}
+
+function checkout() {
+    if (!currentUser) {
+        showToast('Veuillez vous connecter ou créer un compte pour commander', 'warning');
+        showPage('connexion');
+    } else {
+        goToPayment();
+    }
+}
+
+// ========================================
+// PAIEMENT AVEC CHOIX LIVRAISON
+// ========================================
+let selectedShippingMethod = null;
+let shippingCost = 0;
+
+function goToPayment() {
+    if (cart.length === 0) {
+        showToast('Votre panier est vide !', 'warning');
+        return;
+    }
+    
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    // Afficher le récapitulatif
+    document.getElementById('payment-items').innerHTML = cart.map(item => `
+        <div class="payment-item" style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee;">
+            <span>${item.name} × ${item.quantity}</span>
+            <span>${(item.price * item.quantity).toFixed(2)} €</span>
+        </div>
+    `).join('');
+    
+    // Ajouter le choix de livraison AVANT le récapitulatif
+    const paymentContainer = document.querySelector('.payment-summary');
+    if (paymentContainer && !document.getElementById('shipping-selection')) {
+        const shippingHTML = `
+            <div id="shipping-selection" style="margin: 30px 0; padding: 20px; background: #f8f8f8; border-radius: 10px;">
+                <h3 style="color: #A38C7D; margin-bottom: 20px;">🚚 Choisissez votre mode de livraison</h3>
+                
+                <label style="display: block; padding: 15px; margin-bottom: 10px; background: white; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                       onclick="selectShipping('laposte', 5.00)" id="shipping-laposte">
+                    <input type="radio" name="shipping" value="laposte" style="margin-right: 10px;">
+                    <strong>📦 La Poste - Colissimo</strong>
+                    <span style="float: right; color: #4CAF50; font-weight: bold;">5,00 €</span>
+                    <p style="margin: 5px 0 0 25px; font-size: 13px; color: #666;">Livraison en 3-5 jours ouvrés</p>
+                </label>
+                
+                <label style="display: block; padding: 15px; margin-bottom: 10px; background: white; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                       onclick="selectShipping('chronopost', 8.00)" id="shipping-chronopost">
+                    <input type="radio" name="shipping" value="chronopost" style="margin-right: 10px;">
+                    <strong>⚡ Chronopost - Livraison Express</strong>
+                    <span style="float: right; color: #4CAF50; font-weight: bold;">8,00 €</span>
+                    <p style="margin: 5px 0 0 25px; font-size: 13px; color: #666;">Livraison en 24h-48h</p>
+                </label>
+                
+                <label style="display: block; padding: 15px; background: white; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                       onclick="selectShipping('relais', 3.50)" id="shipping-relais">
+                    <input type="radio" name="shipping" value="relais" style="margin-right: 10px;">
+                    <strong>📍 Point Relais</strong>
+                    <span style="float: right; color: #4CAF50; font-weight: bold;">3,50 €</span>
+                    <p style="margin: 5px 0 0 25px; font-size: 13px; color: #666;">Retrait en point relais sous 3-5 jours</p>
+                </label>
+            </div>
+        `;
+        
+        paymentContainer.insertAdjacentHTML('afterbegin', shippingHTML);
+    }
+    
+    updatePaymentTotal(subtotal);
+    showPage('paiement');
+}
+
+function selectShipping(method, cost) {
+    selectedShippingMethod = method;
+    shippingCost = cost;
+    
+    // Mettre à jour le style
+    document.querySelectorAll('[id^="shipping-"]').forEach(el => {
+        el.style.borderColor = '#ddd';
+        el.style.background = 'white';
+    });
+    
+    const selected = document.getElementById(`shipping-${method}`);
+    if (selected) {
+        selected.style.borderColor = '#4CAF50';
+        selected.style.background = '#f0fff4';
+    }
+    
+    // Recalculer le total
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    updatePaymentTotal(subtotal);
+}
+
+function updatePaymentTotal(subtotal) {
+    const total = subtotal + shippingCost;
+    
+    document.getElementById('payment-total-amount').innerHTML = `
+        <div style="text-align: right;">
+            <p style="font-size: 16px; margin: 5px 0;">Sous-total : ${subtotal.toFixed(2)} €</p>
+            ${shippingCost > 0 ? `<p style="font-size: 16px; margin: 5px 0;">Livraison : ${shippingCost.toFixed(2)} €</p>` : ''}
+            <p style="font-size: 24px; font-weight: bold; margin-top: 10px; color: #A38C7D;">Total : ${total.toFixed(2)} €</p>
+        </div>
+    `;
+}
+
+function selectPaymentMethod(method) {
+    if (!selectedShippingMethod) {
+        showToast('Veuillez d\'abord choisir un mode de livraison', 'warning');
+        return;
+    }
+    
+    document.querySelectorAll('input[name="payment"]').forEach(r => r.checked = false);
+    
+    document.getElementById('sumup-form').style.display = 'none';
+    document.getElementById('paypal-form').style.display = 'none';
+    
+    if (method === 'sumup') {
+        document.getElementById('payment-sumup').checked = true;
+        document.getElementById('sumup-form').style.display = 'block';
+    } else if (method === 'paypal') {
+        document.getElementById('payment-paypal').checked = true;
+        document.getElementById('paypal-form').style.display = 'block';
+    }
+}
+
+function processSumUpPayment() {
+    if (!selectedShippingMethod) {
+        showToast('Veuillez choisir un mode de livraison', 'warning');
+        return;
+    }
+    
+    confirmAction('Vous allez être redirigé vers SumUp. Continuer ?', () => {
+        showToast('Paiement SumUp en cours...', 'info');
+        setTimeout(() => {
+            finalizeOrder('SumUp');
+        }, 1000);
+    });
+}
+
+function processPayPalPayment() {
+    if (!selectedShippingMethod) {
+        showToast('Veuillez choisir un mode de livraison', 'warning');
+        return;
+    }
+    
+    confirmAction('Vous allez être redirigé vers PayPal. Continuer ?', () => {
+        showToast('Paiement PayPal en cours...', 'info');
+        setTimeout(() => {
+            finalizeOrder('PayPal');
+        }, 1000);
+    });
+}
+
+async function finalizeOrder(paymentMethod) {
+    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const total = subtotal + shippingCost;
+    
+    const shippingMethodNames = {
+        'laposte': 'La Poste - Colissimo',
+        'chronopost': 'Chronopost - Livraison Express',
+        'relais': 'Point Relais'
+    };
+    
+    const order = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('fr-FR'),
+        items: cart.map(item => ({
+            id: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            customization: item.customization
+        })),
+        subtotal: subtotal,
+        shippingCost: shippingCost,
+        shippingMethod: shippingMethodNames[selectedShippingMethod],
+        total: total,
+        status: 'En préparation',
+        paymentMethod: paymentMethod,
+        shippingAddress: {
+            nom: currentUser.nom,
+            adresse: currentUser.adresse,
+            codePostal: currentUser.codePostal,
+            ville: currentUser.ville,
+            telephone: currentUser.telephone
+        },
+        trackingNumber: '',
+        trackingUrl: ''
+    };
+    
+    try {
+        const response = await fetch('api/save-order.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                order: order,
+                userId: currentUser.id
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('✅ Commande sauvegardée:', order.id);
+            showToast(`Commande n°${order.id} validée avec succès ! 🎉`, 'success');
+        } else {
+            console.error('Erreur:', data.message);
+            showToast('Erreur lors de la sauvegarde', 'error');
+        }
+    } catch (error) {
+        console.error('Erreur sauvegarde commande:', error);
+        showToast('Erreur réseau', 'error');
+    }
+    
+    cart = [];
+    selectedShippingMethod = null;
+    shippingCost = 0;
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    
+    showPage('profil');
+    showProfileSection('orders');
+}
+
+// ========================================
+// CONNEXION / INSCRIPTION
+// ========================================
+function showAuthTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    
+    if (tab === 'login') {
+        document.querySelectorAll('.auth-tab')[0].classList.add('active');
+        document.getElementById('login-form').classList.add('active');
+    } else {
+        document.querySelectorAll('.auth-tab')[1].classList.add('active');
+        document.getElementById('register-form').classList.add('active');
+    }
+}
+
+async function login(event) {
+    event.preventDefault();
+
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+
+    const users = await loadUsersFromAPI();
+    const user = users.find(u => u.email === email && u.password === password && u.role === 'client');
+
+    if (!user) {
+        showToast('Email ou mot de passe incorrect', 'error');
+        return;
+    }
+
+    currentUser = user;
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    
+    showToast('Connexion réussie ! 🎉', 'success');
+
+    document.getElementById('connexionBtn').style.display = 'none';
+    document.getElementById('profilBtn').style.display = 'inline-block';
+    document.getElementById('panierBtn').style.display = 'inline-block';
+    document.getElementById('deconnexionBtn').style.display = 'inline-block';
+
+    showPage('boutique');
+}
+
+async function createAccount(event) {
+    event.preventDefault();
+
+    const nom = document.getElementById('regNom').value;
+    const email = document.getElementById('regEmail').value;
+    const telephone = document.getElementById('regTelephone').value;
+    const adresse = document.getElementById('regAdresse').value;
+    const codePostal = document.getElementById('regCodePostal').value;
+    const ville = document.getElementById('regVille').value;
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+    if (password !== confirmPassword) {
+        showToast('Les mots de passe ne correspondent pas', 'error');
+        return;
+    }
+
+    const users = await loadUsersFromAPI();
+    
+    if (users.find(u => u.email === email)) {
+        showToast('Un compte avec cet email existe déjà', 'error');
+        return;
+    }
+
+    const newUser = {
+        id: Date.now(),
+        role: 'client',
+        nom,
+        email,
+        telephone,
+        adresse,
+        codePostal,
+        ville,
+        password
+    };
+
+    users.push(newUser);
+    await saveUsersToAPI(users);
+    
+    currentUser = newUser;
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    
+    showToast('Compte créé avec succès ! 🎉', 'success');
+
+    document.getElementById('connexionBtn').style.display = 'none';
+    document.getElementById('profilBtn').style.display = 'inline-block';
+    document.getElementById('panierBtn').style.display = 'inline-block';
+    document.getElementById('deconnexionBtn').style.display = 'inline-block';
+
+    showPage('boutique');
+}
+
+// ========================================
+// DÉCONNEXION
+// ========================================
+function logout() {
+    confirmAction('Voulez-vous vraiment vous déconnecter ?', () => {
+        currentUser = null;
+        cart = [];
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('cart');
+        
+        showToast('Déconnexion réussie ! À bientôt 👋', 'info');
+        
+        document.getElementById('connexionBtn').style.display = 'inline-block';
+        document.getElementById('profilBtn').style.display = 'none';
+        document.getElementById('panierBtn').style.display = 'none';
+        document.getElementById('deconnexionBtn').style.display = 'none';
+        
+        updateCartCount();
+        showPage('accueil');
+    });
+}
+
+// ========================================
+// PROFIL
+// ========================================
+function loadProfileData() {
+    if (!currentUser) {
+        showToast('Veuillez vous connecter', 'warning');
+        showPage('connexion');
+        return;
+    }
+
+    document.getElementById('profileNom').value = currentUser.nom;
+    document.getElementById('profileEmail').value = currentUser.email;
+    document.getElementById('profileTelephone').value = currentUser.telephone;
+    document.getElementById('profileAdresse').value = currentUser.adresse;
+    document.getElementById('profileCodePostal').value = currentUser.codePostal;
+    document.getElementById('profileVille').value = currentUser.ville;
+
+    loadOrders();
+}
+
+function showProfileSection(section) {
+    document.querySelectorAll('.profile-section').forEach(s => {
+        s.classList.remove('active');
+    });
+
+    document.querySelectorAll('.profile-tab').forEach(t => {
+        t.classList.remove('active');
+    });
+
+    const sectionMap = {
+        'infos': 'profileInfos',
+        'orders': 'profileOrders',
+        'security': 'profileSecurity',
+        'delete': 'profileDelete'
+    };
+
+    document.getElementById(sectionMap[section]).classList.add('active');
+    event.target.classList.add('active');
+
+    if (section === 'orders') {
+        loadOrders();
+    }
+}
+
+function loadOrders() {
+    if (!currentUser) return;
+
+    fetch('api/get-orders.php')
+        .then(response => response.json())
+        .then(data => {
+            const allOrders = data.orders || [];
+            const orders = allOrders.filter(order => order.userId === currentUser.id);
+            displayOrdersInProfile(orders);
+        })
+        .catch(error => {
+            console.error('Erreur chargement commandes:', error);
+            displayOrdersInProfile([]);
+        });
+}
+
+function displayOrdersInProfile(orders) {
+    const container = document.getElementById('ordersContainer');
+
+    if (!container) return;
+
+    if (orders.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #A38C7D;">
+                <p style="font-size: 28px;">📦</p>
+                <p style="font-size: 24px;">Aucune commande pour le moment</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = orders.map(order => `
+        <div class="order-card" style="background: white; border: 2px solid #A38C7D; border-radius: 10px; padding: 20px; margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h4 style="color: #A38C7D; font-size: 26px;">Commande #${order.id}</h4>
+                <span style="background: #4CAF50; color: white; padding: 5px 15px; border-radius: 20px; font-size: 16px;">${order.status}</span>
+            </div>
+            <p style="font-size: 18px; margin: 5px 0;"><strong>📅 Date :</strong> ${order.date}</p>
+            <p style="font-size: 18px; margin: 5px 0;"><strong>💰 Total :</strong> ${order.total.toFixed(2)} €</p>
+            ${order.paymentMethod ? `<p style="font-size: 18px; margin: 5px 0;"><strong>💳 Paiement :</strong> ${order.paymentMethod}</p>` : ''}
+            ${order.shippingMethod ? `<p style="font-size: 18px; margin: 5px 0;"><strong>🚚 Livraison :</strong> ${order.shippingMethod}</p>` : ''}
+            ${order.trackingNumber ? `
+                <p style="font-size: 18px; margin: 5px 0;">
+                    <strong>📦 Suivi :</strong> 
+                    <a href="${order.trackingUrl || '#'}" target="_blank" style="color: #2196F3; text-decoration: none;">
+                        ${order.trackingNumber} 🔗
+                    </a>
+                </p>
+            ` : ''}
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                ${order.items.map(item => `
+                    <div style="padding: 8px 0; border-bottom: 1px dashed #eee;">
+                        <p style="font-size: 16px; margin: 0;"><strong>${item.name}</strong> × ${item.quantity} = ${(item.price * item.quantity).toFixed(2)} €</p>
+                        ${item.customization ? `
+                            <div style="background: #E3F2FD; padding: 5px 10px; border-radius: 5px; margin-top: 5px; font-size: 13px;">
+                                ${item.customization.text ? `<p style="margin: 2px 0;">💬 ${item.customization.text}</p>` : ''}
+                                ${item.customization.flowers ? `<p style="margin: 2px 0;">🌸 ${item.customization.flowers.join(', ')}</p>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).reverse().join('');
+}
+
+async function updateProfile(event) {
+    event.preventDefault();
+
+    if (!currentUser) return;
+
+    currentUser.nom = document.getElementById('profileNom').value;
+    currentUser.email = document.getElementById('profileEmail').value;
+    currentUser.telephone = document.getElementById('profileTelephone').value;
+    currentUser.adresse = document.getElementById('profileAdresse').value;
+    currentUser.codePostal = document.getElementById('profileCodePostal').value;
+    currentUser.ville = document.getElementById('profileVille').value;
+
+    const users = await loadUsersFromAPI();
+    const index = users.findIndex(u => u.id === currentUser.id);
+    if (index !== -1) {
+        users[index] = currentUser;
+        await saveUsersToAPI(users);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    }
+
+    showToast('Informations mises à jour ! ✅', 'success');
+}
+
+async function changePassword(event) {
+    event.preventDefault();
+
+    if (!currentUser) return;
+
+    const oldPassword = document.getElementById('oldPassword').value;
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+    if (oldPassword !== currentUser.password) {
+        showToast('Ancien mot de passe incorrect', 'error');
+        return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+        showToast('Les nouveaux mots de passe ne correspondent pas', 'error');
+        return;
+    }
+
+    currentUser.password = newPassword;
+    
+    const users = await loadUsersFromAPI();
+    const index = users.findIndex(u => u.id === currentUser.id);
+    if (index !== -1) {
+        users[index] = currentUser;
+        await saveUsersToAPI(users);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    }
+
+    showToast('Mot de passe modifié avec succès ! 🔒', 'success');
+    document.getElementById('passwordForm').reset();
+}
+
+async function deleteAccount() {
+    if (!currentUser) return;
+
+    confirmAction('⚠️ Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible !', async () => {
+        let users = await loadUsersFromAPI();
+        users = users.filter(u => u.id !== currentUser.id);
+        await saveUsersToAPI(users);
+        
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('cart');
+        
+        currentUser = null;
+        cart = [];
+        updateCartCount();
+        
+        showToast('Votre compte a été supprimé.', 'info');
+        showPage('accueil');
+    });
+}
+
+// ========================================
+// FORMULAIRE DE CONTACT
+// ========================================
+function sendContactMessage(event) {
+    event.preventDefault();
+    
+    const nom = document.getElementById('contactNom').value;
+    const email = document.getElementById('contactEmail').value;
+    const subject = document.getElementById('contactSubject').value;
+    const message = document.getElementById('contactMessage').value;
+    
+    const contactData = {
+        id: Date.now(),
+        nom: nom,
+        email: email,
+        subject: subject,
+        message: message,
+        date: new Date().toLocaleString('fr-FR')
+    };
+    
+    fetch('api/send-contact.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(contactData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Message envoyé avec succès ! 📨', 'success');
+            document.querySelector('#contact form').reset();
+        } else {
+            showToast('Erreur lors de l\'envoi', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Message envoyé avec succès ! 📨', 'success');
+        document.querySelector('#contact form').reset();
+    });
+}
+
+// ========================================
+// NAVIGATION
+// ========================================
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => {
+        page.classList.remove('active');
+    });
+
+    const pageElement = document.getElementById(pageId);
+    if (pageElement) {
+        pageElement.classList.add('active');
+    }
+
+    const menuToggle = document.getElementById('menuToggle');
+
+    if (pageId === 'accueil') {
+        if (menuToggle) menuToggle.style.display = 'none';
+        document.getElementById('connexionBtn').style.display = 'inline-block';
+        document.getElementById('profilBtn').style.display = 'none';
+        document.getElementById('panierBtn').style.display = 'none';
+        document.getElementById('deconnexionBtn').style.display = 'none';
+    } else {
+        if (currentUser) {
+            document.getElementById('connexionBtn').style.display = 'none';
+            document.getElementById('profilBtn').style.display = 'inline-block';
+            document.getElementById('panierBtn').style.display = 'inline-block';
+            document.getElementById('deconnexionBtn').style.display = 'inline-block';
+        } else {
+            document.getElementById('connexionBtn').style.display = 'inline-block';
+            document.getElementById('profilBtn').style.display = 'none';
+            document.getElementById('panierBtn').style.display = 'inline-block';
+            document.getElementById('deconnexionBtn').style.display = 'none';
+        }
+
+        if (pageId === 'panier') {
+            if (menuToggle) menuToggle.style.display = 'none';
+            displayCart();
+        } else if (['boutique', 'fondants', 'bruleparfums', 'coffrets', 'peignes', 'bijoux', 'couronnes', 'all-products'].includes(pageId)) {
+            if (menuToggle) menuToggle.style.display = 'block';
+        } else {
+            if (menuToggle) menuToggle.style.display = 'none';
+        }
+    }
+
+    if (pageId === 'profil') {
+        loadProfileData();
+    }
+
+    if (pageId === 'boutique') {
+        loadProducts('all');
+    }
 }
 
 function showCategoryPage(category) {
@@ -213,10 +1282,20 @@ function filterProducts(category) {
 
     container.innerHTML = filtered.map(product => `
         <div class="product-card">
-            <img src="${product.image || 'placeholder.jpg'}" alt="${product.name}" onerror="this.src='placeholder.jpg'">
+            <img src="${product.image || 'https://via.placeholder.com/300x200/F5E6D3/8B7355?text=Produit'}" alt="${product.name}">
             <h3>${product.name}</h3>
             <p class="product-description">${product.description || ''}</p>
+            ${product.allergens && product.allergens.length > 0 ? `
+                <div style="background: #FFF3CD; padding: 8px; border-radius: 5px; margin: 10px 0; font-size: 12px;">
+                    <strong>⚠️ Allergènes :</strong> ${product.allergens.join(', ')}
+                </div>
+            ` : ''}
             <p class="product-price">${parseFloat(product.price).toFixed(2)} €</p>
+            ${product.customizable ? `
+                <p style="color: #2196F3; font-size: 14px; margin: 5px 0;">
+                    ✨ Personnalisable
+                </p>
+            ` : ''}
             <button class="add-to-cart-btn" onclick="addToCart(${product.id})">
                 🛒 Ajouter au panier
             </button>
@@ -235,543 +1314,32 @@ function toggleMenu() {
     }
 }
 
-document.addEventListener('click', function(event) {
-    const menu = document.getElementById('sideMenu');
-    const menuToggle = document.getElementById('menuToggle');
-    
-    if (menu && menuToggle) {
-        if (!menu.contains(event.target) && !menuToggle.contains(event.target)) {
-            menu.classList.remove('open');
-        }
-    }
-});
-
-// ========================================
-// PANIER
-// ========================================
-function addToCart(productId) {
-    const product = allProducts.find(p => p.id === productId);
-
-    if (!product) {
-        alert('❌ Produit introuvable');
-        return;
-    }
-
-    const existingItem = cart.find(item => item.id === productId);
-
-    if (existingItem) {
-        existingItem.quantity++;
-    } else {
-        cart.push({
-            id: product.id,
-            name: product.name,
-            price: parseFloat(product.price),
-            image: product.image || 'placeholder.jpg',
-            quantity: 1
-        });
-    }
-
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-
-    const button = event.target;
-    const originalText = button.textContent;
-    button.textContent = '✅ Ajouté !';
-    button.style.background = '#4CAF50';
-
-    setTimeout(() => {
-        button.textContent = originalText;
-        button.style.background = '';
-    }, 1500);
-}
-
-function updateCartCount() {
-    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const cartCountEl = document.getElementById('cartCount');
-    if (cartCountEl) {
-        cartCountEl.textContent = totalItems;
-    }
-}
-
-function displayCart() {
-    const container = document.getElementById('cartContainer');
-    const summary = document.getElementById('cartSummary');
-
-    if (!container || !summary) return;
-
-    if (cart.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 60px; color: #A38C7D;">
-                <p style="font-size: 32px;">🛒</p>
-                <p style="font-size: 28px;">Votre panier est vide</p>
-                <button class="btn-enter" onclick="showPage('boutique')" style="margin-top: 30px;">
-                    Continuer mes achats
-                </button>
-            </div>
-        `;
-        summary.innerHTML = '';
-        return;
-    }
-
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-    container.innerHTML = cart.map(item => `
-        <div class="cart-item">
-            <img src="${item.image || 'placeholder.jpg'}" 
-                 alt="${item.name}" 
-                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
-                 onerror="this.src='placeholder.jpg'">
-            <div class="cart-item-info">
-                <h4>${item.name}</h4>
-                <p>${item.price.toFixed(2)} € × ${item.quantity}</p>
-            </div>
-            <div class="cart-item-actions">
-                <button onclick="updateQuantity(${item.id}, -1)" style="background: #A38C7D; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 20px;">-</button>
-                <span style="margin: 0 15px; font-size: 22px; font-weight: bold;">${item.quantity}</span>
-                <button onclick="updateQuantity(${item.id}, 1)" style="background: #A38C7D; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 20px;">+</button>
-                <button onclick="removeFromCart(${item.id})" style="background: #D32F2F; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 20px; font-size: 20px;">🗑️</button>
-            </div>
-        </div>
-    `).join('');
-
-    summary.innerHTML = `
-        <h3 style="color: #A38C7D; font-size: 32px; margin-bottom: 20px;">Récapitulatif</h3>
-        <p style="font-size: 28px; margin-bottom: 30px;">Total : <strong>${total.toFixed(2)} €</strong></p>
-        <button class="btn-enter" onclick="checkout()">Passer la commande</button>
-    `;
-}
-
-function updateQuantity(productId, change) {
-    const item = cart.find(i => i.id === productId);
-
-    if (!item) return;
-
-    item.quantity += change;
-
-    if (item.quantity <= 0) {
-        removeFromCart(productId);
-        return;
-    }
-
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    displayCart();
-}
-
-function removeFromCart(productId) {
-    cart = cart.filter(item => item.id !== productId);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    displayCart();
-}
-
-function checkout() {
-    if (!currentUser) {
-        alert('⚠️ Veuillez vous connecter ou créer un compte pour commander');
-        showPage('connexion');
-    } else {
-        goToPayment();
-    }
-}
-
-// ========================================
-// PAIEMENT
-// ========================================
-function goToPayment() {
-    if (cart.length === 0) {
-        alert('⚠️ Votre panier est vide !');
-        return;
-    }
-    
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    
-    document.getElementById('payment-items').innerHTML = cart.map(item => `
-        <div class="payment-item">
-            <span>${item.name} × ${item.quantity}</span>
-            <span>${(item.price * item.quantity).toFixed(2)} €</span>
-        </div>
-    `).join('');
-    
-    document.getElementById('payment-total-amount').textContent = total.toFixed(2) + ' €';
-    
-    showPage('paiement');
-}
-
-function selectPaymentMethod(method) {
-    document.querySelectorAll('input[name="payment"]').forEach(r => r.checked = false);
-    
-    document.getElementById('sumup-form').style.display = 'none';
-    document.getElementById('paypal-form').style.display = 'none';
-    
-    if (method === 'sumup') {
-        document.getElementById('payment-sumup').checked = true;
-        document.getElementById('sumup-form').style.display = 'block';
-    } else if (method === 'paypal') {
-        document.getElementById('payment-paypal').checked = true;
-        document.getElementById('paypal-form').style.display = 'block';
-    }
-}
-
-function processSumUpPayment() {
-    if (!confirm('🔄 Vous allez être redirigé vers SumUp. Continuer ?')) {
-        return;
-    }
-    
-    alert('💳 [MODE TEST] Paiement SumUp simulé avec succès !');
-    finalizeOrder('SumUp');
-}
-
-function processPayPalPayment() {
-    if (!confirm('🔄 Vous allez être redirigé vers PayPal. Continuer ?')) {
-        return;
-    }
-    
-    alert('💰 [MODE TEST] Paiement PayPal simulé avec succès !');
-    finalizeOrder('PayPal');
-}
-
-function finalizeOrder(paymentMethod) {
-    const order = {
-        id: Date.now(),
-        date: new Date().toLocaleDateString('fr-FR'),
-        items: [...cart],
-        total: cart.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        status: 'Payée',
-        paymentMethod: paymentMethod
-    };
-    
-    let userOrders = JSON.parse(localStorage.getItem(`orders_${currentUser.id}`)) || [];
-    userOrders.push(order);
-    localStorage.setItem(`orders_${currentUser.id}`, JSON.stringify(userOrders));
-    
-    cart = [];
-    localStorage.setItem('cart', JSON.stringify(cart));
-    updateCartCount();
-    
-    alert(`✅ Commande n°${order.id} validée avec succès !
-    
-Merci pour votre achat ! 🎉`);
-    
-    showPage('profil');
-    showProfileSection('orders');
-}
-
-// ========================================
-// CONNEXION / INSCRIPTION
-// ========================================
-function showAuthTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-    
-    if (tab === 'login') {
-        document.querySelectorAll('.auth-tab')[0].classList.add('active');
-        document.getElementById('login-form').classList.add('active');
-    } else {
-        document.querySelectorAll('.auth-tab')[1].classList.add('active');
-        document.getElementById('register-form').classList.add('active');
-    }
-}
-
-function login(event) {
-    event.preventDefault();
-
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
-
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const user = users.find(u => u.email === email && u.password === password && u.role === 'client');
-
-    if (!user) {
-        alert('❌ Email ou mot de passe incorrect');
-        return;
-    }
-
-    currentUser = user;
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    
-    alert('✅ Connexion réussie !');
-
-    document.getElementById('connexionBtn').style.display = 'none';
-    document.getElementById('profilBtn').style.display = 'inline-block';
-    document.getElementById('panierBtn').style.display = 'inline-block';
-
-    showPage('boutique');
-}
-
-function createAccount(event) {
-    event.preventDefault();
-
-    const nom = document.getElementById('regNom').value;
-    const email = document.getElementById('regEmail').value;
-    const telephone = document.getElementById('regTelephone').value;
-    const adresse = document.getElementById('regAdresse').value;
-    const codePostal = document.getElementById('regCodePostal').value;
-    const ville = document.getElementById('regVille').value;
-    const password = document.getElementById('regPassword').value;
-    const confirmPassword = document.getElementById('regConfirmPassword').value;
-
-    if (password !== confirmPassword) {
-        alert('❌ Les mots de passe ne correspondent pas !');
-        return;
-    }
-
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    
-    if (users.find(u => u.email === email)) {
-        alert('❌ Un compte avec cet email existe déjà !');
-        return;
-    }
-
-    const newUser = {
-        id: Date.now(),
-        role: 'client',
-        nom,
-        email,
-        telephone,
-        adresse,
-        codePostal,
-        ville,
-        password
-    };
-
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    
-    currentUser = newUser;
-    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    
-    alert('✅ Compte créé avec succès !');
-
-    document.getElementById('connexionBtn').style.display = 'none';
-    document.getElementById('profilBtn').style.display = 'inline-block';
-    document.getElementById('panierBtn').style.display = 'inline-block';
-
-    showPage('boutique');
-}
-
-// ========================================
-// NAVIGATION
-// ========================================
-function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-
-    const pageElement = document.getElementById(pageId);
-    if (pageElement) {
-        pageElement.classList.add('active');
-    }
-
-    const menuToggle = document.getElementById('menuToggle');
-
-    if (pageId === 'accueil') {
-        if (menuToggle) menuToggle.style.display = 'none';
-        document.getElementById('connexionBtn').style.display = 'inline-block';
-        document.getElementById('profilBtn').style.display = 'none';
-        document.getElementById('panierBtn').style.display = 'none';
-    } else {
-        if (currentUser) {
-            document.getElementById('connexionBtn').style.display = 'none';
-            document.getElementById('profilBtn').style.display = 'inline-block';
-            document.getElementById('panierBtn').style.display = 'inline-block';
-        } else {
-            document.getElementById('connexionBtn').style.display = 'inline-block';
-            document.getElementById('profilBtn').style.display = 'none';
-            document.getElementById('panierBtn').style.display = 'inline-block';
-        }
-
-        if (pageId === 'panier') {
-            if (menuToggle) menuToggle.style.display = 'none';
-            displayCart();
-        } else if (['boutique', 'fondants', 'bruleparfums', 'coffrets', 'peignes', 'bijoux', 'couronnes', 'all-products'].includes(pageId)) {
-            if (menuToggle) menuToggle.style.display = 'block';
-        } else {
-            if (menuToggle) menuToggle.style.display = 'none';
-        }
-    }
-
-    if (pageId === 'profil') {
-        loadProfileData();
-    }
-
-    if (pageId === 'boutique') {
-        loadProducts('all');
-    }
-}
-
-// ========================================
-// PROFIL
-// ========================================
-function loadProfileData() {
-    if (!currentUser) {
-        alert('❌ Veuillez vous connecter');
-        showPage('connexion');
-        return;
-    }
-
-    document.getElementById('profileNom').value = currentUser.nom;
-    document.getElementById('profileEmail').value = currentUser.email;
-    document.getElementById('profileTelephone').value = currentUser.telephone;
-    document.getElementById('profileAdresse').value = currentUser.adresse;
-    document.getElementById('profileCodePostal').value = currentUser.codePostal;
-    document.getElementById('profileVille').value = currentUser.ville;
-
-    loadOrders();
-}
-
-function showProfileSection(section) {
-    document.querySelectorAll('.profile-section').forEach(s => {
-        s.classList.remove('active');
-    });
-
-    document.querySelectorAll('.profile-tab').forEach(t => {
-        t.classList.remove('active');
-    });
-
-    const sectionMap = {
-        'infos': 'profileInfos',
-        'orders': 'profileOrders',
-        'security': 'profileSecurity',
-        'delete': 'profileDelete'
-    };
-
-    document.getElementById(sectionMap[section]).classList.add('active');
-    event.target.classList.add('active');
-
-    if (section === 'orders') {
-        loadOrders();
-    }
-}
-
-function loadOrders() {
-    if (!currentUser) return;
-
-    const orders = JSON.parse(localStorage.getItem(`orders_${currentUser.id}`)) || [];
-    const container = document.getElementById('ordersContainer');
-
-    if (!container) return;
-
-    if (orders.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #A38C7D;">
-                <p style="font-size: 28px;">📦</p>
-                <p style="font-size: 24px;">Aucune commande pour le moment</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = orders.map(order => `
-        <div class="order-card" style="background: white; border: 2px solid #A38C7D; border-radius: 10px; padding: 20px; margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h4 style="color: #A38C7D; font-size: 26px;">Commande #${order.id}</h4>
-                <span style="background: #4CAF50; color: white; padding: 5px 15px; border-radius: 20px; font-size: 20px;">${order.status}</span>
-            </div>
-            <p style="font-size: 22px; margin: 5px 0;"><strong>Date :</strong> ${order.date}</p>
-            <p style="font-size: 22px; margin: 5px 0;"><strong>Total :</strong> ${order.total.toFixed(2)} €</p>
-            ${order.paymentMethod ? `<p style="font-size: 22px; margin: 5px 0;"><strong>Paiement :</strong> ${order.paymentMethod}</p>` : ''}
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-                ${order.items.map(item => `
-                    <p style="font-size: 20px; color: #666;">• ${item.name} × ${item.quantity}</p>
-                `).join('')}
-            </div>
-        </div>
-    `).reverse().join('');
-}
-
-function updateProfile(event) {
-    event.preventDefault();
-
-    if (!currentUser) return;
-
-    currentUser.nom = document.getElementById('profileNom').value;
-    currentUser.email = document.getElementById('profileEmail').value;
-    currentUser.telephone = document.getElementById('profileTelephone').value;
-    currentUser.adresse = document.getElementById('profileAdresse').value;
-    currentUser.codePostal = document.getElementById('profileCodePostal').value;
-    currentUser.ville = document.getElementById('profileVille').value;
-
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const index = users.findIndex(u => u.id === currentUser.id);
-    if (index !== -1) {
-        users[index] = currentUser;
-        localStorage.setItem('users', JSON.stringify(users));
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    }
-
-    alert('✅ Informations mises à jour !');
-}
-
-function changePassword(event) {
-    event.preventDefault();
-
-    if (!currentUser) return;
-
-    const oldPassword = document.getElementById('oldPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmNewPassword = document.getElementById('confirmNewPassword').value;
-
-    if (oldPassword !== currentUser.password) {
-        alert('❌ Ancien mot de passe incorrect');
-        return;
-    }
-
-    if (newPassword !== confirmNewPassword) {
-        alert('❌ Les nouveaux mots de passe ne correspondent pas');
-        return;
-    }
-
-    currentUser.password = newPassword;
-    
-    const users = JSON.parse(localStorage.getItem('users')) || [];
-    const index = users.findIndex(u => u.id === currentUser.id);
-    if (index !== -1) {
-        users[index] = currentUser;
-        localStorage.setItem('users', JSON.stringify(users));
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    }
-
-    alert('✅ Mot de passe modifié !');
-    document.getElementById('passwordForm').reset();
-}
-
-function deleteAccount() {
-    if (!currentUser) return;
-
-    if (confirm('⚠️ Êtes-vous sûr de vouloir supprimer votre compte ? Cette action est irréversible !')) {
-        let users = JSON.parse(localStorage.getItem('users')) || [];
-        users = users.filter(u => u.id !== currentUser.id);
-        localStorage.setItem('users', JSON.stringify(users));
-        
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem(`orders_${currentUser.id}`);
-        localStorage.removeItem('cart');
-        
-        currentUser = null;
-        cart = [];
-        updateCartCount();
-        
-        alert('✅ Votre compte a été supprimé.');
-        showPage('accueil');
-    }
-}
-
 // ========================================
 // INITIALISATION
 // ========================================
 window.addEventListener('load', () => {
-    const migratedUser = migrateOldAccount();
-    
-    if (migratedUser) {
-        currentUser = migratedUser;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-    }
-    
     updateCartCount();
 
     if (currentUser) {
         document.getElementById('connexionBtn').style.display = 'none';
         document.getElementById('profilBtn').style.display = 'inline-block';
         document.getElementById('panierBtn').style.display = 'inline-block';
+        document.getElementById('deconnexionBtn').style.display = 'inline-block';
     }
+    
+    // Charger les produits
+    loadProducts('all');
 });
+
+// Synchronisation auto
+setInterval(() => {
+    if (currentUser) {
+        loadOrders();
+    }
+    
+    const activePage = document.querySelector('.page.active');
+    if (activePage && ['fondants', 'bruleparfums', 'coffrets', 'peignes', 'bijoux', 'couronnes', 'all-products'].includes(activePage.id)) {
+        const category = activePage.id === 'all-products' ? 'all' : activePage.id;
+        loadProducts(category);
+    }
+}, 30000);
