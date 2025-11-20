@@ -347,6 +347,11 @@ function addToCart(productId) {
 }
 
 function openCustomizationModal(product) {
+    if (!product.options) {
+        addProductToCart(product, null);
+        return;
+    }
+
     const overlay = document.createElement('div');
     overlay.style.cssText = `
         position: fixed;
@@ -368,74 +373,142 @@ function openCustomizationModal(product) {
         padding: 30px;
         border-radius: 12px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        max-width: 500px;
+        max-width: 600px;
+        width: 90%;
         max-height: 80vh;
         overflow-y: auto;
         animation: scaleIn 0.3s ease;
     `;
     
     let customizationHTML = `
-        <h3 style="color: #A38C7D; margin-bottom: 20px;">✨ Personnaliser votre produit</h3>
-        <p style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">${product.name}</p>
+        <h3 style="color: #8B4789; margin-bottom: 10px; font-size: 24px;">✨ Personnaliser votre produit</h3>
+        <p style="font-size: 18px; font-weight: bold; margin-bottom: 30px; color: #333;">${product.name}</p>
+        <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0; color: #666;"><strong>Prix de base :</strong> ${product.price.toFixed(2)}€</p>
+            <p id="total-price" style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold; color: #8B4789;">Prix total : ${product.price.toFixed(2)}€</p>
+        </div>
     `;
     
-    // Texte personnalisé
-    if (product.customOptions && product.customOptions.allowText) {
-        customizationHTML += `
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">
-                    💬 Votre message personnalisé :
-                </label>
-                <input type="text" id="custom-text" maxlength="${product.customOptions.textMaxLength || 50}" 
-                    placeholder="Ex: Joyeux anniversaire Marie"
-                    style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
-                <small style="color: #666;">Maximum ${product.customOptions.textMaxLength || 50} caractères</small>
-            </div>
-        `;
-    }
+    let basePrice = parseFloat(product.price);
     
-    // Choix des fleurs
-    if (product.customOptions && product.customOptions.allowFlowers) {
-        customizationHTML += `
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 10px; font-weight: bold;">
-                    🌸 Choisissez vos fleurs (max ${product.customOptions.maxFlowersSelection || 3}) :
-                </label>
-                ${product.customOptions.availableFlowers.map((flower, index) => `
-                    <label style="display: block; padding: 8px; margin-bottom: 5px; cursor: pointer; border-radius: 5px; transition: background 0.2s;"
-                           onmouseover="this.style.background='#f5f5f5'" onmouseout="this.style.background='white'">
-                        <input type="checkbox" class="flower-checkbox" value="${flower}" data-max="${product.customOptions.maxFlowersSelection || 3}"
-                               style="margin-right: 10px;">
-                        ${flower}
+    // Générer les champs pour chaque option
+    Object.keys(product.options).forEach(optionKey => {
+        const option = product.options[optionKey];
+        const isRequired = option.required ? ' <span style="color: red;">*</span>' : '';
+        
+        customizationHTML += `<div style="margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px;">`;
+        customizationHTML += `<label style="display: block; margin-bottom: 12px; font-weight: bold; font-size: 16px; color: #555;">
+            ${option.label}${isRequired}
+        </label>`;
+        
+        // OPTIONS AVEC CHOIX (select/radio)
+        if (option.choices && option.choices.length > 0) {
+            customizationHTML += `<div class="option-choices" data-option="${optionKey}">`;
+            
+            option.choices.forEach((choice, index) => {
+                const priceInfo = choice.priceModifier > 0 ? ` (+${choice.priceModifier.toFixed(2)}€)` : '';
+                customizationHTML += `
+                    <label style="display: block; padding: 12px; margin-bottom: 8px; cursor: pointer; 
+                           border: 2px solid #ddd; border-radius: 8px; transition: all 0.2s; background: white;"
+                           onmouseover="this.style.borderColor='#8B4789'; this.style.background='#f9f9f9';" 
+                           onmouseout="if(!this.querySelector('input').checked) { this.style.borderColor='#ddd'; this.style.background='white'; }">
+                        <input type="radio" name="option-${optionKey}" value="${choice.value}" 
+                               data-price="${choice.priceModifier || 0}" data-option="${optionKey}"
+                               ${index === 0 && option.required ? 'checked' : ''}
+                               onchange="updateCustomPrice()"
+                               style="margin-right: 10px; cursor: pointer;">
+                        <span style="font-size: 15px;">${choice.label}${priceInfo}</span>
                     </label>
-                `).join('')}
-            </div>
-        `;
-    }
+                `;
+            });
+            
+            customizationHTML += `</div>`;
+        }
+        // INPUT TEXTE
+        else if (option.type === 'text') {
+            const priceInfo = option.priceModifier > 0 ? ` (+${option.priceModifier.toFixed(2)}€)` : '';
+            customizationHTML += `
+                <input type="text" id="option-${optionKey}" 
+                       placeholder="${option.placeholder || 'Entrez votre texte'}"
+                       data-price="${option.priceModifier || 0}" data-option="${optionKey}"
+                       onkeyup="updateCustomPrice()"
+                       ${option.required ? 'required' : ''}
+                       style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; 
+                              font-size: 14px; transition: border-color 0.2s;">
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    ${option.required ? 'Champ requis' : 'Optionnel'}${priceInfo}
+                </small>
+            `;
+        }
+        // SELECT
+        else if (option.type === 'select' && option.choices) {
+            customizationHTML += `
+                <select id="option-${optionKey}" data-price-base="0" data-option="${optionKey}"
+                        onchange="updateCustomPrice()"
+                        ${option.required ? 'required' : ''}
+                        style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; 
+                               font-size: 14px; cursor: pointer; background: white;">
+                    ${!option.required ? '<option value="">-- Sélectionnez --</option>' : ''}
+                    ${option.choices.map(choice => {
+                        const priceInfo = choice.priceModifier > 0 ? ` (+${choice.priceModifier.toFixed(2)}€)` : '';
+                        return `<option value="${choice.value}" data-price="${choice.priceModifier || 0}">
+                            ${choice.label}${priceInfo}
+                        </option>`;
+                    }).join('')}
+                </select>
+            `;
+        }
+        // CHECKBOX
+        else if (option.type === 'checkbox') {
+            const priceInfo = option.priceModifier > 0 ? ` (+${option.priceModifier.toFixed(2)}€)` : '';
+            customizationHTML += `
+                <label style="display: flex; align-items: center; padding: 12px; cursor: pointer; 
+                       border: 2px solid #ddd; border-radius: 8px; background: white; transition: all 0.2s;"
+                       onmouseover="this.style.borderColor='#8B4789'; this.style.background='#f9f9f9';" 
+                       onmouseout="if(!this.querySelector('input').checked) { this.style.borderColor='#ddd'; this.style.background='white'; }">
+                    <input type="checkbox" id="option-${optionKey}" 
+                           data-price="${option.priceModifier || 0}" data-option="${optionKey}"
+                           onchange="updateCustomPrice()"
+                           style="margin-right: 10px; width: 18px; height: 18px; cursor: pointer;">
+                    <span style="font-size: 15px;">${option.label}${priceInfo}</span>
+                </label>
+            `;
+        }
+        
+        customizationHTML += `</div>`;
+    });
     
     customizationHTML += `
-        <div style="display: flex; gap: 10px; margin-top: 30px;">
+        <div style="display: flex; gap: 12px; margin-top: 30px;">
             <button id="add-custom-product" style="
                 flex: 1;
-                padding: 12px 24px;
-                background: #4CAF50;
+                padding: 14px 24px;
+                background: linear-gradient(135deg, #8B4789 0%, #A85A9A 100%);
                 color: white;
                 border: none;
-                border-radius: 6px;
+                border-radius: 8px;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 600;
-            ">✅ Ajouter au panier</button>
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(139,71,137,0.4)';"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                ✅ Ajouter au panier
+            </button>
             <button id="cancel-custom" style="
-                padding: 12px 24px;
+                padding: 14px 24px;
                 background: #f44336;
                 color: white;
                 border: none;
-                border-radius: 6px;
+                border-radius: 8px;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: 16px;
                 font-weight: 600;
-            ">❌ Annuler</button>
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(244,67,54,0.4)';"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                ❌ Annuler
+            </button>
         </div>
     `;
     
@@ -443,34 +516,95 @@ function openCustomizationModal(product) {
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
     
-    // Gestion des checkboxes (max sélection)
-    const checkboxes = modal.querySelectorAll('.flower-checkbox');
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', function() {
-            const max = parseInt(this.dataset.max);
-            const checked = modal.querySelectorAll('.flower-checkbox:checked').length;
-            if (checked >= max) {
-                modal.querySelectorAll('.flower-checkbox:not(:checked)').forEach(c => c.disabled = true);
-            } else {
-                modal.querySelectorAll('.flower-checkbox').forEach(c => c.disabled = false);
+    // Fonction pour mettre à jour le prix total
+    window.updateCustomPrice = function() {
+        let totalPrice = basePrice;
+        
+        // Parcourir tous les radios sélectionnés
+        modal.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+            totalPrice += parseFloat(radio.dataset.price || 0);
+        });
+        
+        // Parcourir tous les checkboxes cochés
+        modal.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            totalPrice += parseFloat(checkbox.dataset.price || 0);
+        });
+        
+        // Parcourir tous les inputs texte remplis
+        modal.querySelectorAll('input[type="text"]').forEach(input => {
+            if (input.value.trim() !== '') {
+                totalPrice += parseFloat(input.dataset.price || 0);
             }
         });
-    });
+        
+        // Parcourir tous les selects
+        modal.querySelectorAll('select').forEach(select => {
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption && selectedOption.dataset.price) {
+                totalPrice += parseFloat(selectedOption.dataset.price);
+            }
+        });
+        
+        document.getElementById('total-price').textContent = `Prix total : ${totalPrice.toFixed(2)}€`;
+    };
     
+    // Initialiser le prix
+    updateCustomPrice();
+    
+    // Bouton ajouter au panier
     document.getElementById('add-custom-product').onclick = () => {
         const customization = {};
+        let finalPrice = basePrice;
+        let isValid = true;
         
-        if (product.customOptions && product.customOptions.allowText) {
-            const text = document.getElementById('custom-text').value.trim();
-            if (text) customization.text = text;
-        }
+        // Récupérer toutes les options
+        Object.keys(product.options).forEach(optionKey => {
+            const option = product.options[optionKey];
+            
+            if (option.choices) {
+                // Radio buttons
+                const selected = modal.querySelector(`input[name="option-${optionKey}"]:checked`);
+                if (selected) {
+                    customization[optionKey] = selected.value;
+                    finalPrice += parseFloat(selected.dataset.price || 0);
+                } else if (option.required) {
+                    showToast(`Veuillez sélectionner ${option.label}`, 'error');
+                    isValid = false;
+                }
+            } else if (option.type === 'text') {
+                const input = modal.querySelector(`#option-${optionKey}`);
+                if (input && input.value.trim()) {
+                    customization[optionKey] = input.value.trim();
+                    finalPrice += parseFloat(input.dataset.price || 0);
+                } else if (option.required) {
+                    showToast(`Veuillez remplir ${option.label}`, 'error');
+                    isValid = false;
+                }
+            } else if (option.type === 'select') {
+                const select = modal.querySelector(`#option-${optionKey}`);
+                if (select && select.value) {
+                    customization[optionKey] = select.value;
+                    const selectedOption = select.options[select.selectedIndex];
+                    if (selectedOption && selectedOption.dataset.price) {
+                        finalPrice += parseFloat(selectedOption.dataset.price);
+                    }
+                } else if (option.required) {
+                    showToast(`Veuillez sélectionner ${option.label}`, 'error');
+                    isValid = false;
+                }
+            } else if (option.type === 'checkbox') {
+                const checkbox = modal.querySelector(`#option-${optionKey}`);
+                if (checkbox && checkbox.checked) {
+                    customization[optionKey] = true;
+                    finalPrice += parseFloat(checkbox.dataset.price || 0);
+                }
+            }
+        });
         
-        if (product.customOptions && product.customOptions.allowFlowers) {
-            const selectedFlowers = Array.from(modal.querySelectorAll('.flower-checkbox:checked')).map(cb => cb.value);
-            if (selectedFlowers.length > 0) customization.flowers = selectedFlowers;
-        }
+        if (!isValid) return;
         
-        addProductToCart(product, customization);
+        // Ajouter au panier avec le prix final
+        addProductToCart(product, customization, finalPrice);
         overlay.remove();
     };
     
@@ -483,12 +617,13 @@ function openCustomizationModal(product) {
     };
 }
 
-function addProductToCart(product, customization) {
+function addProductToCart(product, customization, finalPrice = null) {
     const cartItem = {
         id: Date.now(), // ID unique pour chaque article (même produit peut avoir plusieurs personnalisations)
         productId: product.id,
         name: product.name,
-        price: parseFloat(product.price),
+        price: finalPrice !== null ? parseFloat(finalPrice) : parseFloat(product.price),
+        basePrice: parseFloat(product.price),
         image: product.image || 'https://via.placeholder.com/80x80/F5E6D3/8B7355?text=Produit',
         quantity: 1,
         customization: customization
@@ -531,30 +666,75 @@ function displayCart() {
 
     const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-    container.innerHTML = cart.map(item => `
-        <div class="cart-item" style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; display: flex; gap: 15px; align-items: center;">
+    container.innerHTML = cart.map(item => {
+        // Construire l'affichage des personnalisations
+        let customHTML = '';
+        if (item.customization && Object.keys(item.customization).length > 0) {
+            customHTML = '<div style="background: #f0f8ff; padding: 10px; border-radius: 6px; font-size: 13px; margin-top: 8px; border-left: 3px solid #8B4789;">';
+            
+            // Trouver le produit original pour avoir les labels
+            const originalProduct = allProducts.find(p => p.id === item.productId);
+            
+            Object.keys(item.customization).forEach(key => {
+                const value = item.customization[key];
+                let label = key;
+                let displayValue = value;
+                
+                // Si on a le produit original, utiliser les vrais labels
+                if (originalProduct && originalProduct.options && originalProduct.options[key]) {
+                    label = originalProduct.options[key].label;
+                    
+                    // Si c'est un choix, trouver le label correspondant
+                    if (originalProduct.options[key].choices) {
+                        const choice = originalProduct.options[key].choices.find(c => c.value === value);
+                        if (choice) displayValue = choice.label;
+                    }
+                }
+                
+                // Icônes selon le type
+                let icon = '✨';
+                if (key === 'size') icon = '📏';
+                else if (key === 'text') icon = '💬';
+                else if (key === 'flowers' || key === 'driedFlowers') icon = '🌸';
+                else if (key === 'color') icon = '🎨';
+                else if (key === 'material') icon = '💎';
+                
+                if (typeof displayValue === 'boolean') {
+                    displayValue = displayValue ? 'Oui' : 'Non';
+                }
+                
+                customHTML += `<p style="margin: 4px 0;"><strong>${icon} ${label} :</strong> ${displayValue}</p>`;
+            });
+            
+            customHTML += '</div>';
+        }
+        
+        // Info prix
+        let priceInfo = `${item.price.toFixed(2)} €`;
+        if (item.basePrice && item.price !== item.basePrice) {
+            priceInfo = `<span style="color: #999; text-decoration: line-through; font-size: 12px;">${item.basePrice.toFixed(2)} €</span> ${item.price.toFixed(2)} €`;
+        }
+        
+        return `
+        <div class="cart-item" style="border: 1px solid #ddd; border-radius: 10px; padding: 15px; margin-bottom: 15px; display: flex; gap: 15px; align-items: center; background: white; transition: box-shadow 0.2s;">
             <img src="${item.image}" 
                  alt="${item.name}" 
-                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;"
+                 style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #eee;"
                  onerror="this.src='https://via.placeholder.com/80x80/F5E6D3/8B7355?text=Produit'">
             <div style="flex: 1;">
-                <h4 style="margin: 0 0 10px 0;">${item.name}</h4>
-                ${item.customization ? `
-                    <div style="background: #E3F2FD; padding: 8px; border-radius: 5px; font-size: 13px; margin-bottom: 8px;">
-                        ${item.customization.text ? `<p style="margin: 2px 0;"><strong>💬 Message :</strong> ${item.customization.text}</p>` : ''}
-                        ${item.customization.flowers ? `<p style="margin: 2px 0;"><strong>🌸 Fleurs :</strong> ${item.customization.flowers.join(', ')}</p>` : ''}
-                    </div>
-                ` : ''}
-                <p style="margin: 0; color: #666;">${item.price.toFixed(2)} € × ${item.quantity}</p>
+                <h4 style="margin: 0 0 8px 0; color: #333;">${item.name}</h4>
+                ${customHTML}
+                <p style="margin: 8px 0 0 0; color: #666; font-size: 15px;">${priceInfo} × ${item.quantity}</p>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <button onclick="updateQuantity('${item.id}', -1)" style="background: #A38C7D; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">-</button>
-                <span style="font-size: 18px; font-weight: bold;">${item.quantity}</span>
-                <button onclick="updateQuantity('${item.id}', 1)" style="background: #A38C7D; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;">+</button>
-                <button onclick="removeFromCart('${item.id}')" style="background: #D32F2F; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 10px;">🗑️</button>
+                <button onclick="updateQuantity('${item.id}', -1)" style="background: #8B4789; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background 0.2s;" onmouseover="this.style.background='#6d3569'" onmouseout="this.style.background='#8B4789'">-</button>
+                <span style="font-size: 18px; font-weight: bold; min-width: 30px; text-align: center;">${item.quantity}</span>
+                <button onclick="updateQuantity('${item.id}', 1)" style="background: #8B4789; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background 0.2s;" onmouseover="this.style.background='#6d3569'" onmouseout="this.style.background='#8B4789'">+</button>
+                <button onclick="removeFromCart('${item.id}')" style="background: #D32F2F; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; margin-left: 10px; transition: background 0.2s;" onmouseover="this.style.background='#b71c1c'" onmouseout="this.style.background='#D32F2F'">🗑️</button>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 
     summary.innerHTML = `
         <h3 style="color: #A38C7D; font-size: 32px; margin-bottom: 20px;">Récapitulatif</h3>

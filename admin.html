@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - Pois de Senteurs</title>
+    <link rel="icon" href="Pois de Senteurs By Julie.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- BANDEAU SUPÉRIEUR -->
+    <header class="admin-header">
+        <div class="container">
+            <h1>Administration - Pois de Senteurs</h1>
+            <div class="header-actions">
+                <button onclick="window.location.href='index.html'" class="btn-retour">
+                    ← Retour au site
+                </button>
+                <button onclick="deconnexion()" class="btn-deconnexion">
+                    🔓 Déconnexion
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONNEXION ADMIN -->
+    <div id="login-section" class="login-container">
+        <div class="login-box">
+            <h2>🔐 Connexion Administrateur</h2>
+            <form id="login-form" onsubmit="return login(event)">
+                <div class="form-group">
+                    <label>Identifiant</label>
+                    <input type="text" id="admin-username" placeholder="admin" required>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" id="admin-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">Se connecter</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ZONE ADMIN -->
+    <div id="admin-zone" class="admin-zone" style="display: none;">
+        <div class="container">
+
+            <!-- STATISTIQUES -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📦 Produits</h3>
+                    <p class="stat-number" id="total-products">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>💰 Valeur Stock</h3>
+                    <p class="stat-number" id="total-value">0 €</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📊 Total Stock</h3>
+                    <p class="stat-number" id="total-stock">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>⚠️ Stock Faible</h3>
+                    <p class="stat-number" id="low-stock">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>🛍️ Commandes</h3>
+                    <p class="stat-number" id="total-orders">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>👤 Clients</h3>
+                    <p class="stat-number" id="total-clients">0</p>
+                </div>
+            </div>
+            
+            <!-- ONGLETS -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('products')">
+                    🛍️ Gestion des Produits
+                </button>
+                <button class="tab-btn" onclick="showTab('add')">
+                    ➕ Ajouter un Produit
+                </button>
+                <button class="tab-btn" onclick="showTab('clients')">
+                    👥 Gestion des Clients
+                </button>
+                <button class="tab-btn" onclick="showTab('orders')">📦 Commandes</button>
+                <button class="tab-btn" onclick="showTab('messages')">📧 Messages Contact</button>
+            </div>
+
+            <!-- ONGLET LISTE DES PRODUITS -->
+            <div id="tab-products" class="tab-content active">
+                <div class="section-header">
+                    <h2>Liste des Produits</h2>
+                    <input type="text" id="search-product" placeholder="🔍 Rechercher un produit..." onkeyup="searchProducts()">
+                </div>
+
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Nom</th>
+                                <th>Catégorie</th>
+                                <th>Prix</th>
+                                <th>Stock</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ONGLET AJOUTER PRODUIT -->
+            <div id="tab-add" class="tab-content">
+                <div class="section-header">
+                    <h2 id="form-title">➕ Ajouter un Nouveau Produit</h2>
+                </div>
+
+                <form id="product-form" class="product-form" onsubmit="submitProduct(event); return false;">
+                    <input type="hidden" id="edit-id">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nom du produit *</label>
+                            <input type="text" id="product-name" placeholder="Ex: Fondant Lavande" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Catégorie *</label>
+                            <select id="product-category" required>
+                                <option value="">Choisir...</option>
+                                <option value="fondants">🌸 Fondants parfumés</option>
+                                <option value="bruleparfums">🕯️ Brûle-parfums</option>
+                                <option value="coffrets">🎁 Coffrets</option>
+                                <option value="peignes">💐 Peignes à chignon</option>
+                                <option value="bijoux">💍 Bijoux en fleurs séchées</option>
+                                <option value="couronnes">👑 Couronnes en fleurs séchées</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prix (€) *</label>
+                            <input type="number" id="product-price" placeholder="19.99" step="0.01" min="0" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Stock *</label>
+                            <input type="number" id="product-stock" placeholder="10" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="product-description" rows="4" placeholder="Décrivez le produit..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>URL de l'image</label>
+                        <input type="url" id="product-image" placeholder="https://exemple.com/image.jpg">
+                        <small>Ou glissez une image ci-dessous</small>
+                    </div>
+
+                    <div class="image-upload" id="image-upload" onclick="document.getElementById('file-input').click()">
+                        <p>📸 Glissez votre image ici ou cliquez pour sélectionner</p>
+                        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    </div>
+
+                    <div id="image-preview" style="display: none;">
+                        <img id="preview-img" src="" alt="Aperçu">
+                        <button type="button" onclick="removeImage()" class="btn-remove-img">✖ Supprimer</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-save">💾 Enregistrer</button>
+                        <button type="button" onclick="cancelEdit()" class="btn-cancel">✖ Annuler</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ONGLET GESTION DES CLIENTS -->
+            <div id="tab-clients" class="tab-content">
+                <div class="section-header">
+                    <h2>👥 Liste des Clients</h2>
+                    <input type="text" id="search-client" placeholder="🔍 Rechercher un client..." onkeyup="searchClients()">
+                </div>
+
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Téléphone</th>
+                                <th>Ville</th>
+                                <th>Commandes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clients-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <!-- ONGLET COMMANDES -->
+            <div id="tab-orders" class="tab-content">
+                <div class="section-header">
+                    <h2>📦 Gestion des Commandes</h2>
+                    <span class="sync-badge">🔄 Sync active</span>
+                </div>
+
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Client</th>
+                                <th>Produits</th>
+                                <th>Total</th>
+                                <th>Statut</th>
+                                <th>Paiement</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ONGLET MESSAGES CONTACT -->
+            <div id="tab-messages" class="tab-content">
+                <div class="section-header">
+                    <h2>📧 Messages de Contact</h2>
+                    <span class="sync-badge">🔄 Sync active</span>
+                </div>
+
+                <div class="products-table-container">
+                    <table class="products-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Nom</th>
+                                <th>Email</th>
+                                <th>Sujet</th>
+                                <th>Message</th>
+                                <th>Statut</th>
+                                <th style="width: 180px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="messages-list">
+                            <!-- Rempli dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMATION SUPPRESSION PRODUIT -->
+    <div id="delete-modal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Confirmer la suppression</h3>
+            <p>Êtes-vous sûr de vouloir supprimer ce produit ?</p>
+            <p><strong>Cette action est irréversible !</strong></p>
+            <div class="modal-actions">
+                <button type="button" onclick="confirmDelete()" class="btn-confirm">✅ Oui, supprimer</button>
+                <button type="button" onclick="closeDeleteModal()" class="btn-cancel">❌ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DÉTAILS CLIENT OU COMMANDE -->
+    <div id="client-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <h3>📋 Détails</h3>
+            <div id="client-details"></div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeClientModal()" class="btn-cancel">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMATION SUPPRESSION CLIENT -->
+    <div id="delete-client-modal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Confirmer la suppression du client</h3>
+            <p>Êtes-vous sûr de vouloir supprimer ce client ?</p>
+            <p><strong>Toutes ses données (commandes, etc.) seront supprimées !</strong></p>
+            <div class="modal-actions">
+                <button type="button" onclick="confirmDeleteClient()" class="btn-confirm">✅ Oui, supprimer</button>
+                <button type="button" onclick="closeDeleteClientModal()" class="btn-cancel">❌ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMATION SUPPRESSION COMMANDE -->
+    <div id="delete-order-modal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Confirmer la suppression de la commande</h3>
+            <p>Êtes-vous sûr de vouloir supprimer cette commande ?</p>
+            <p><strong>Cette action est irréversible !</strong></p>
+            <div class="modal-actions">
+                <button type="button" onclick="confirmDeleteOrder()" class="btn-confirm">✅ Oui, supprimer</button>
+                <button type="button" onclick="closeDeleteOrderModal()" class="btn-cancel">❌ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMATION SUPPRESSION MESSAGE -->
+    <div id="delete-message-modal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Confirmer la suppression du message</h3>
+            <p>Êtes-vous sûr de vouloir supprimer ce message ?</p>
+            <div class="modal-actions">
+                <button type="button" onclick="confirmDeleteMessage()" class="btn-confirm">✅ Oui, supprimer</button>
+                <button type="button" onclick="closeDeleteMessageModal()" class="btn-cancel">❌ Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DÉTAILS MESSAGE -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content" style="max-width: 700px;">
+            <h3>📧 Détails du Message</h3>
+            <div id="message-details" style="text-align: left; margin: 20px 0;"></div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeMessageModal()" class="btn-cancel">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RÉPONDRE AU MESSAGE -->
+    <div id="reply-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <h3>📧 Répondre au message</h3>
+            <div id="reply-original-message" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #8B4789;">
+                <!-- Message original affiché ici -->
+            </div>
+            <form id="reply-form" style="text-align: left; margin-top: 20px;">
+                <div class="form-group">
+                    <label for="reply-subject">Sujet de la réponse</label>
+                    <input type="text" id="reply-subject" class="form-control" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="reply-message">Votre réponse</label>
+                    <textarea id="reply-message" class="form-control" rows="8" required placeholder="Écrivez votre réponse ici..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                </div>
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="submit" class="btn-confirm">📧 Envoyer la réponse</button>
+                    <button type="button" onclick="closeReplyModal()" class="btn-cancel">❌ Annuler</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
